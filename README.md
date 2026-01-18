@@ -1,35 +1,33 @@
-# 📊 Sentiviz
+# Sentiviz
 
 **Real-Time Options & Sentiment Analysis Dashboard**
-
-Sentiviz is a comprehensive financial analysis platform that combines real-time options chain data with multi-source sentiment analysis to provide traders and investors with actionable insights. By fusing market data with social media and news sentiment, Sentiviz helps identify potential market movements before they happen.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![Node](https://img.shields.io/badge/node-18+-green.svg)
 
-## ✨ Features
+## Features
 
-### 📈 Options Analysis
+### Options Analysis
 - **Real-time Options Chain** - Live options data with Greeks (Delta, Gamma, Theta, Vega)
 - **Black-Scholes Pricing** - Accurate option pricing and implied volatility calculations
 - **Scenario Analysis** - Model potential outcomes with sentiment-adjusted pricing
 - **Historical Volatility** - Track volatility trends over time
 
-### 💬 Sentiment Analysis
+### Sentiment Analysis
 - **Reddit Sentiment** - Real-time analysis of r/wallstreetbets and other trading subreddits using VADER
 - **GDELT News Sentiment** - Global news sentiment from the GDELT Project
 - **Fusion Index** - Combined sentiment score using exponential moving averages
 - **Spike Detection** - Identify unusual sentiment surges using Z-score analysis
 
-### 🎯 Key Capabilities
+### Key Capabilities
 - Multi-source sentiment fusion with configurable weights
 - Sentiment regime detection (bullish/bearish/neutral)
 - Real-time data updates via REST API
 - Interactive dashboard with responsive design
 - Comprehensive test coverage
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 sentiviz/
@@ -47,7 +45,7 @@ sentiviz/
 └── docs/            # Documentation
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - **Python 3.8+** - Backend API
@@ -55,14 +53,14 @@ sentiviz/
 - **Redis** (optional) - For caching
 - **Reddit API credentials** - For sentiment analysis
 
-### 1️⃣ Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/Joachim-Chuah/senior_project.git
 cd senior_project/sentiviz
 ```
 
-### 2️⃣ Backend Setup
+### 2. Backend Setup
 
 ```bash
 cd backend
@@ -85,7 +83,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 The API will be available at `http://localhost:8000`  
 API documentation: `http://localhost:8000/docs`
 
-### 3️⃣ Frontend Setup
+### 3. Frontend Setup
 
 Open a **new terminal**:
 
@@ -101,7 +99,7 @@ npm run dev
 
 The UI will be available at `http://localhost:5173`
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Options
 - `GET /api/options/chain/{ticker}` - Fetch option chain with Greeks
@@ -119,7 +117,7 @@ The UI will be available at `http://localhost:5173`
 - `GET /api/fusion/spikes/{ticker}` - Detect sentiment spikes
 - `POST /api/fusion/update/{ticker}` - Update sentiment data
 
-## 🧪 Testing
+## Testing
 
 ### Backend Tests
 ```bash
@@ -136,7 +134,7 @@ cd frontend
 npm run build                  # Verify production build
 ```
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **FastAPI** - Modern async web framework
@@ -154,7 +152,7 @@ npm run build                  # Verify production build
 - **Tailwind CSS** - Utility-first styling
 - **Axios** - HTTP client
 
-## 📊 How It Works
+## How It Works
 
 1. **Data Collection**: Sentiviz fetches real-time options data from Yahoo Finance and sentiment data from Reddit and GDELT
 2. **Sentiment Analysis**: VADER analyzes text sentiment, producing scores from -1 (bearish) to +1 (bullish)
@@ -162,7 +160,7 @@ npm run build                  # Verify production build
 4. **Spike Detection**: Z-score analysis identifies unusual sentiment surges
 5. **Scenario Modeling**: Black-Scholes pricing is adjusted based on sentiment to model potential outcomes
 
-## 🔑 Getting Reddit API Credentials
+## Getting Reddit API Credentials
 
 1. Go to https://www.reddit.com/prefs/apps
 2. Click "Create App" or "Create Another App"
@@ -170,7 +168,7 @@ npm run build                  # Verify production build
 4. Fill in the required fields
 5. Copy your `client_id` and `client_secret` to `.env`
 
-## 📝 Configuration
+## Configuration
 
 Edit `backend/.env` to configure:
 - Reddit API credentials
@@ -181,15 +179,15 @@ Edit `backend/.env` to configure:
 
 See `backend/.env.example` for all available options.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **GDELT Project** - Global news sentiment data
 - **Reddit API** - Social media sentiment
@@ -198,4 +196,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**Built with ❤️ for traders and investors**
+**Built for traders and investors**
