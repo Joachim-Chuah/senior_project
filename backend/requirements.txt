@@ -1,0 +1,37 @@
+# FastAPI and web framework
+fastapi==0.119.0
+uvicorn[standard]==0.37.0
+python-multipart==0.0.20
+
+# Pydantic v2
+pydantic==2.12.2
+pydantic-settings==2.11.0
+
+# Data processing
+pandas==2.3.3
+numpy==2.3.4
+scipy==1.16.2
+
+# Options data
+yfinance==0.2.51
+
+# Sentiment analysis
+vaderSentiment==3.3.2
+praw==7.8.1
+
+# HTTP requests
+requests==2.32.3
+
+# Redis (optional)
+redis==5.2.1
+
+# Database
+sqlalchemy==2.0.44
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.2
+httpx==0.28.1
+
+# Development
+python-dotenv==1.0.1
