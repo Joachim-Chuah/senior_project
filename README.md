@@ -17,6 +17,7 @@
 ### Sentiment Analysis
 - **Reddit Sentiment** - Real-time analysis of r/wallstreetbets and other trading subreddits using VADER
 - **GDELT News Sentiment** - Global news sentiment from the GDELT Project
+- **Fusion Index** - Combined sentiment score using exponential moving averages
 - **Spike Detection** - Identify unusual sentiment surges using Z-score analysis
 
 ### Key Capabilities
