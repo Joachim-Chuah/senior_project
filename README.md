@@ -9,7 +9,7 @@
 ## Features
 
 ### Options Analysis
-- **Real-time Options Chain** - Live options data with Greeks (Delta, Gamma, Theta, Vega)
+- **Options Chain Analysis** - Fetch options data with Greeks (Delta, Gamma, Theta, Vega)
 - **Black-Scholes Pricing** - Accurate option pricing and implied volatility calculations
 - **Scenario Analysis** - Model potential outcomes with sentiment-adjusted pricing
 - **Historical Volatility** - Track volatility trends over time
@@ -17,7 +17,6 @@
 ### Sentiment Analysis
 - **Reddit Sentiment** - Real-time analysis of r/wallstreetbets and other trading subreddits using VADER
 - **GDELT News Sentiment** - Global news sentiment from the GDELT Project
-- **Fusion Index** - Combined sentiment score using exponential moving averages
 - **Spike Detection** - Identify unusual sentiment surges using Z-score analysis
 
 ### Key Capabilities
@@ -25,7 +24,6 @@
 - Sentiment regime detection (bullish/bearish/neutral)
 - Real-time data updates via REST API
 - Interactive dashboard with responsive design
-- Comprehensive test coverage
 
 ## Architecture
 
