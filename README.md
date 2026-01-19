@@ -177,10 +177,6 @@ Edit `backend/.env` to configure:
 
 See `backend/.env.example` for all available options.
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
 ## License
 
 This project is licensed under the MIT License.
