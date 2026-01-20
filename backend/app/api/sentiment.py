@@ -8,6 +8,8 @@ import logging
 
 from app.services.sentiment_service import SentimentService
 from app.models.sentiment import RedditPost, GDELTArticle, SentimentSummary, SentimentExplanation
+from app.utils.validation import validate_ticker
+from app.utils.errors import handle_api_error, TickerNotFoundError, ExternalAPIError
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -30,6 +32,9 @@ async def get_reddit_sentiment(
         limit: Maximum number of posts to fetch
     """
     try:
+        # Validate and normalize ticker
+        ticker = validate_ticker(ticker)
+
         subreddit_list = subreddits.split(",") if subreddits else \
                          ["wallstreetbets", "stocks", "investing"]
 
@@ -41,9 +46,11 @@ async def get_reddit_sentiment(
 
         return posts
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error fetching Reddit sentiment: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error fetching Reddit sentiment for {ticker}: {e}")
+        raise handle_api_error(e, ticker, "fetching Reddit sentiment")
 
 
 @router.get("/gdelt/{ticker}", response_model=List[GDELTArticle])
@@ -59,6 +66,9 @@ async def get_gdelt_sentiment(
         keywords: Optional comma-separated additional keywords
     """
     try:
+        # Validate and normalize ticker
+        ticker = validate_ticker(ticker)
+
         keyword_list = keywords.split(",") if keywords else None
 
         articles = await sentiment_service.get_gdelt_sentiment(
@@ -68,9 +78,11 @@ async def get_gdelt_sentiment(
 
         return articles
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error fetching GDELT sentiment: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error fetching GDELT sentiment for {ticker}: {e}")
+        raise handle_api_error(e, ticker, "fetching GDELT sentiment")
 
 
 @router.get("/explanation/{ticker}", response_model=SentimentExplanation)
@@ -79,6 +91,9 @@ async def get_sentiment_explanation(ticker: str):
     Get detailed explanation for current sentiment analysis
     """
     try:
+        # Validate and normalize ticker
+        ticker = validate_ticker(ticker)
+
         # Fetch both sources
         reddit_posts = await sentiment_service.get_reddit_sentiment(ticker, limit=50)
         gdelt_articles = await sentiment_service.get_gdelt_sentiment(ticker)
@@ -92,9 +107,11 @@ async def get_sentiment_explanation(ticker: str):
 
         return explanation
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error generating sentiment explanation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error generating sentiment explanation for {ticker}: {e}")
+        raise handle_api_error(e, ticker, "generating sentiment explanation")
 
 
 @router.get("/summary/{ticker}", response_model=SentimentSummary)
@@ -104,7 +121,10 @@ async def get_sentiment_summary(ticker: str):
     """
     try:
         from app.api.fusion import fusion_service
-        from datetime import datetime
+        from datetime import datetime, timezone
+
+        # Validate and normalize ticker
+        ticker = validate_ticker(ticker)
 
         # Fetch fresh data from sources
         reddit_posts = await sentiment_service.get_reddit_sentiment(ticker, limit=50)
@@ -112,9 +132,9 @@ async def get_sentiment_summary(ticker: str):
 
         # Calculate latest scores
         reddit_score = sum(p.sentiment_score for p in reddit_posts) / len(reddit_posts) \
-                      if reddit_posts else 0.0
+                      if len(reddit_posts) > 0 else 0.0
         gdelt_score = sum(a.tone for a in gdelt_articles) / len(gdelt_articles) \
-                     if gdelt_articles else 0.0
+                     if len(gdelt_articles) > 0 else 0.0
 
         # Push to FusionService to maintain history and get metrics
         alpha = sentiment_service.settings.SENTIMENT_ALPHA
@@ -135,6 +155,8 @@ async def get_sentiment_summary(ticker: str):
             current_fusion_score=fusion_data.fusion_sentiment,
             reddit_score=reddit_score,
             gdelt_score=gdelt_score,
+            reddit_posts=len(reddit_posts),
+            gdelt_articles=len(gdelt_articles),
             regime=regime_data['regime'],
             volatility=regime_data['volatility'],
             trend=regime_data['trend'],
@@ -142,6 +164,8 @@ async def get_sentiment_summary(ticker: str):
             last_updated=fusion_data.timestamp
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error generating sentiment summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error generating sentiment summary for {ticker}: {e}")
+        raise handle_api_error(e, ticker, "generating sentiment summary")

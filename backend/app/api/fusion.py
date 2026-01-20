@@ -8,6 +8,8 @@ import logging
 
 from app.services.fusion_service import FusionService
 from app.models.sentiment import SentimentSpike
+from app.utils.validation import validate_ticker, validate_sentiment_score
+from app.utils.errors import handle_api_error
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -28,14 +30,17 @@ async def get_sentiment_timeseries(
         limit: Maximum number of data points
     """
     try:
+        ticker = validate_ticker(ticker)
         timeseries = fusion_service.get_sentiment_timeseries(ticker, limit)
         return {
             "ticker": ticker,
             "data": timeseries
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error fetching timeseries: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error fetching timeseries for {ticker}: {e}")
+        raise handle_api_error(e, ticker, "fetching sentiment timeseries")
 
 
 @router.get("/regime/{ticker}")
@@ -51,17 +56,20 @@ async def get_sentiment_regime(
         lookback: Number of periods to analyze
     """
     try:
+        ticker = validate_ticker(ticker)
         regime = fusion_service.get_sentiment_regime(ticker, lookback)
         return {
             "ticker": ticker,
             **regime
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error calculating regime: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error calculating regime for {ticker}: {e}")
+        raise handle_api_error(e, ticker, "calculating sentiment regime")
 
 
-@router.get("/spikes/{ticker}", response_model=List[SentimentSpike])
+@router.get("/spikes/{ticker}")
 async def detect_sentiment_spikes(
     ticker: str,
     z_threshold: float = Query(2.0, ge=1.0, le=5.0)
@@ -74,11 +82,14 @@ async def detect_sentiment_spikes(
         z_threshold: Z-score threshold for spike detection
     """
     try:
+        ticker = validate_ticker(ticker)
         spikes = fusion_service.detect_sentiment_spikes(ticker, z_threshold)
-        return spikes
+        return {"spikes": spikes}
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error detecting spikes: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error detecting spikes for {ticker}: {e}")
+        raise handle_api_error(e, ticker, "detecting sentiment spikes")
 
 
 @router.post("/update/{ticker}")
@@ -100,6 +111,10 @@ async def update_sentiment_data(
     try:
         from datetime import datetime, timezone
 
+        ticker = validate_ticker(ticker)
+        validate_sentiment_score(reddit_score, "Reddit score")
+        validate_sentiment_score(gdelt_score, "GDELT score")
+
         data = fusion_service.add_sentiment_data(
             ticker,
             datetime.now(timezone.utc),
@@ -114,6 +129,8 @@ async def update_sentiment_data(
             "timestamp": data.timestamp
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error updating sentiment data: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error updating sentiment data for {ticker}: {e}")
+        raise handle_api_error(e, ticker, "updating sentiment data")

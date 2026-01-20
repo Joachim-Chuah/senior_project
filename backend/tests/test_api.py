@@ -22,7 +22,7 @@ class TestAPIEndpoints:
 
     def test_health_check(self):
         """Test health check endpoint"""
-        response = client.get("/health")
+        response = client.get("/api/health")
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
@@ -30,10 +30,16 @@ class TestAPIEndpoints:
 
     def test_scenario_analysis_endpoint(self):
         """Test scenario analysis endpoint"""
+        from datetime import datetime, timedelta
+
+        # Use a date 30 days in the future
+        future_date = datetime.now() + timedelta(days=30)
+        expiration = future_date.strftime("%Y-%m-%d")
+
         payload = {
             "ticker": "AAPL",
             "strike": 150,
-            "expiration": "2024-12-31",
+            "expiration": expiration,
             "option_type": "call",
             "spot_price": 150,
             "volatility": 0.3,

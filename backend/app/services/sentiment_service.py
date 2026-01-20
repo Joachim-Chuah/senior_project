@@ -145,7 +145,8 @@ class SentimentService:
                 f"&startdatetime={timespan}"
             )
 
-            response = requests.get(url, timeout=30)
+            # Timeout: 10s connect, 30s read
+            response = requests.get(url, timeout=(10, 30))
             response.raise_for_status()
 
             data = response.json()

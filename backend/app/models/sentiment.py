@@ -3,7 +3,7 @@ Pydantic models for sentiment data
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timezone
 
 
@@ -59,10 +59,12 @@ class SentimentSummary(BaseModel):
     current_fusion_score: float
     reddit_score: float
     gdelt_score: float
+    reddit_posts: int = 0
+    gdelt_articles: int = 0
     regime: str  # "bullish", "bearish", "neutral"
     volatility: float
     trend: float
-    recent_spikes: list
+    recent_spikes: List[SentimentSpike]
     last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
