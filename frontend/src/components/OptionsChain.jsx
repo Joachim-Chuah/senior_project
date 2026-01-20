@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ArrowRight, AlertCircle } from 'lucide-react';
+import { Search, ArrowRight, AlertCircle, Calendar } from 'lucide-react';
 import api from '../utils/api';
 import { validateTicker } from '../utils/helpers';
 import { getErrorMessage } from '../utils/errorHandler';
@@ -11,13 +11,21 @@ const OptionsChain = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [validationError, setValidationError] = useState(null);
+    const [selectedExpiration, setSelectedExpiration] = useState('');
 
-    const fetchOptions = async (tickerToFetch) => {
+    const fetchOptions = async (tickerToFetch, expiration = null) => {
         setLoading(true);
         setError(null);
         try {
-            const res = await api.get(`/options/chain/${tickerToFetch}`);
+            const url = expiration
+                ? `/options/chain/${tickerToFetch}?expiration=${expiration}`
+                : `/options/chain/${tickerToFetch}`;
+            const res = await api.get(url);
             setData(res.data);
+            // Set the selected expiration to what was returned
+            if (res.data.expiration_date) {
+                setSelectedExpiration(res.data.expiration_date);
+            }
         } catch (err) {
             const errorMsg = getErrorMessage(err);
             setError(errorMsg);
@@ -38,7 +46,14 @@ const OptionsChain = () => {
         }
 
         setTicker(validation.ticker);
+        setSelectedExpiration(''); // Reset expiration on new ticker
         fetchOptions(validation.ticker);
+    };
+
+    const handleExpirationChange = (e) => {
+        const newExpiration = e.target.value;
+        setSelectedExpiration(newExpiration);
+        fetchOptions(ticker, newExpiration);
     };
 
     return (
@@ -105,8 +120,27 @@ const OptionsChain = () => {
                             <p className="text-2xl font-bold text-white">${data.current_price?.toFixed(2) || 'N/A'}</p>
                         </div>
                         <div>
-                            <p className="text-gray-400 text-sm">Expiration</p>
-                            <p className="text-lg font-medium text-white">{data.expiration_date || 'N/A'}</p>
+                            <p className="text-gray-400 text-sm mb-1">Expiration Date</p>
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                                <select
+                                    value={selectedExpiration}
+                                    onChange={handleExpirationChange}
+                                    disabled={loading}
+                                    className="bg-gray-700 border border-gray-600 text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer min-w-[160px]"
+                                >
+                                    {data.available_expirations?.map((exp) => (
+                                        <option key={exp} value={exp}>
+                                            {exp}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
