@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     # Groq AI
     GROQ_API_KEY: str = ""
 
+    # Tavily Web Search
+    TAVILY_API_KEY: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = True

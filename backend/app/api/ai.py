@@ -116,3 +116,36 @@ async def analyze_ticker(ticker: str):
     except Exception as e:
         logger.error(f"Error analyzing {ticker}: {e}")
         raise handle_api_error(e, ticker, "generating AI analysis")
+
+
+class NewsResponse(BaseModel):
+    """News search response model"""
+    ticker: str
+    summary: str
+
+
+@router.get("/news/{ticker}", response_model=NewsResponse)
+async def get_news(ticker: str, query: Optional[str] = None):
+    """
+    Get AI-summarized news for a ticker
+
+    Args:
+        ticker: Stock ticker symbol
+        query: Optional search query to narrow results
+    """
+    try:
+        ticker = validate_ticker(ticker)
+
+        # Search and summarize news
+        summary = await groq_service.search_news(ticker, query)
+
+        return NewsResponse(
+            ticker=ticker,
+            summary=summary
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching news for {ticker}: {e}")
+        raise handle_api_error(e, ticker, "fetching news")
