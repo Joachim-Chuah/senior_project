@@ -64,46 +64,73 @@ class BlackScholesCalculator:
         Returns:
             Dictionary with delta, gamma, theta, vega, rho
         """
-        d1 = self._d1(spot_price, strike, time_to_expiry, volatility)
-        d2 = self._d2(d1, volatility, time_to_expiry)
+        # Guard against invalid inputs - return zeros
+        if spot_price <= 0 or strike <= 0 or time_to_expiry <= 0 or volatility <= 0.001:
+            return {
+                'delta': 0.0,
+                'gamma': 0.0,
+                'theta': 0.0,
+                'vega': 0.0,
+                'rho': 0.0
+            }
 
-        # Delta
-        if option_type.lower() == "call":
-            delta = norm.cdf(d1)
-        else:
-            delta = norm.cdf(d1) - 1
+        try:
+            d1 = self._d1(spot_price, strike, time_to_expiry, volatility)
+            d2 = self._d2(d1, volatility, time_to_expiry)
 
-        # Gamma (same for calls and puts)
-        gamma = norm.pdf(d1) / (spot_price * volatility * np.sqrt(time_to_expiry))
+            # Delta
+            if option_type.lower() == "call":
+                delta = norm.cdf(d1)
+            else:
+                delta = norm.cdf(d1) - 1
 
-        # Theta
-        if option_type.lower() == "call":
-            theta = (
-                -(spot_price * norm.pdf(d1) * volatility) / (2 * np.sqrt(time_to_expiry))
-                - self.risk_free_rate * strike * np.exp(-self.risk_free_rate * time_to_expiry) * norm.cdf(d2)
-            ) / 365  # Convert to daily theta
-        else:
-            theta = (
-                -(spot_price * norm.pdf(d1) * volatility) / (2 * np.sqrt(time_to_expiry))
-                + self.risk_free_rate * strike * np.exp(-self.risk_free_rate * time_to_expiry) * norm.cdf(-d2)
-            ) / 365  # Convert to daily theta
+            # Gamma (same for calls and puts)
+            gamma = norm.pdf(d1) / (spot_price * volatility * np.sqrt(time_to_expiry))
 
-        # Vega (same for calls and puts)
-        vega = spot_price * norm.pdf(d1) * np.sqrt(time_to_expiry) / 100  # Per 1% change
+            # Theta
+            if option_type.lower() == "call":
+                theta = (
+                    -(spot_price * norm.pdf(d1) * volatility) / (2 * np.sqrt(time_to_expiry))
+                    - self.risk_free_rate * strike * np.exp(-self.risk_free_rate * time_to_expiry) * norm.cdf(d2)
+                ) / 365  # Convert to daily theta
+            else:
+                theta = (
+                    -(spot_price * norm.pdf(d1) * volatility) / (2 * np.sqrt(time_to_expiry))
+                    + self.risk_free_rate * strike * np.exp(-self.risk_free_rate * time_to_expiry) * norm.cdf(-d2)
+                ) / 365  # Convert to daily theta
 
-        # Rho
-        if option_type.lower() == "call":
-            rho = strike * time_to_expiry * np.exp(-self.risk_free_rate * time_to_expiry) * norm.cdf(d2) / 100
-        else:
-            rho = -strike * time_to_expiry * np.exp(-self.risk_free_rate * time_to_expiry) * norm.cdf(-d2) / 100
+            # Vega (same for calls and puts)
+            vega = spot_price * norm.pdf(d1) * np.sqrt(time_to_expiry) / 100  # Per 1% change
 
-        return {
-            'delta': delta,
-            'gamma': gamma,
-            'theta': theta,
-            'vega': vega,
-            'rho': rho
-        }
+            # Rho
+            if option_type.lower() == "call":
+                rho = strike * time_to_expiry * np.exp(-self.risk_free_rate * time_to_expiry) * norm.cdf(d2) / 100
+            else:
+                rho = -strike * time_to_expiry * np.exp(-self.risk_free_rate * time_to_expiry) * norm.cdf(-d2) / 100
+
+            # Sanitize outputs - replace NaN/inf with 0
+            def sanitize(val):
+                if np.isnan(val) or np.isinf(val):
+                    return 0.0
+                return float(val)
+
+            return {
+                'delta': sanitize(delta),
+                'gamma': sanitize(gamma),
+                'theta': sanitize(theta),
+                'vega': sanitize(vega),
+                'rho': sanitize(rho)
+            }
+
+        except Exception as e:
+            logger.warning(f"Error calculating Greeks: {e}")
+            return {
+                'delta': 0.0,
+                'gamma': 0.0,
+                'theta': 0.0,
+                'vega': 0.0,
+                'rho': 0.0
+            }
 
     def adjust_for_sentiment(
         self,
@@ -140,11 +167,18 @@ class BlackScholesCalculator:
         volatility: float
     ) -> float:
         """Calculate d1 term"""
-        return (
-            (np.log(spot_price / strike) +
-             (self.risk_free_rate + 0.5 * volatility ** 2) * time_to_expiry)
-            / (volatility * np.sqrt(time_to_expiry))
-        )
+        # Guard against invalid inputs
+        if spot_price <= 0 or strike <= 0 or time_to_expiry <= 0 or volatility <= 0:
+            return 0.0
+
+        try:
+            return (
+                (np.log(spot_price / strike) +
+                 (self.risk_free_rate + 0.5 * volatility ** 2) * time_to_expiry)
+                / (volatility * np.sqrt(time_to_expiry))
+            )
+        except (ValueError, ZeroDivisionError, FloatingPointError):
+            return 0.0
 
     def _d2(self, d1: float, volatility: float, time_to_expiry: float) -> float:
         """Calculate d2 term"""
