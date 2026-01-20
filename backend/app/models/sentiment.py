@@ -4,7 +4,7 @@ Pydantic models for sentiment data
 
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class RedditPost(BaseModel):
@@ -63,4 +63,56 @@ class SentimentSummary(BaseModel):
     volatility: float
     trend: float
     recent_spikes: list
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
+    last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class RedditExplanation(BaseModel):
+    """Explanation of Reddit sentiment analysis"""
+    total_posts: int
+    positive_count: int
+    negative_count: int
+    neutral_count: int
+    top_keywords: list[str] = Field(default_factory=list)
+    top_posts: list[dict] = Field(default_factory=list)  # [{title, score, sentiment}]
+    subreddits: list[str] = Field(default_factory=list)
+    average_score: float
+    confidence: float = 0.0
+
+
+class GDELTExplanation(BaseModel):
+    """Explanation of GDELT sentiment analysis"""
+    total_articles: int
+    positive_count: int
+    negative_count: int
+    neutral_count: int
+    top_themes: list[str] = Field(default_factory=list)
+    top_sources: list[str] = Field(default_factory=list)
+    articles: list[GDELTArticle] = Field(default_factory=list)
+    average_tone: float
+    confidence: float = 0.0
+
+
+class SentimentExplanation(BaseModel):
+    """Complete explanation of sentiment analysis"""
+    ticker: str
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
+    # Scores
+    reddit_score: float
+    gdelt_score: float
+    fusion_score: float
+    
+    # Weights
+    reddit_weight: float
+    gdelt_weight: float
+    
+    # Regime
+    regime: str
+    regime_reasoning: str
+    
+    # Detailed explanations
+    reddit_explanation: Optional[RedditExplanation] = None
+    gdelt_explanation: Optional[GDELTExplanation] = None
+    
+    # Key factors
+    key_factors: list[str] = Field(default_factory=list)

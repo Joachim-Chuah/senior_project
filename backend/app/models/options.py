@@ -4,7 +4,7 @@ Pydantic models for options data
 
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class OptionContract(BaseModel):
@@ -36,7 +36,7 @@ class OptionChain(BaseModel):
     calls: List[OptionContract]
     puts: List[OptionContract]
     available_expirations: List[str]
-    fetched_at: datetime = Field(default_factory=datetime.utcnow)
+    fetched_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ScenarioAnalysis(BaseModel):

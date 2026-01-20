@@ -3,7 +3,7 @@ Sentiviz Backend - FastAPI Main Application
 Real-Time Options & Sentiment Dashboard
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
@@ -52,18 +52,10 @@ app.include_router(options.router, prefix="/api/options", tags=["options"])
 app.include_router(sentiment.router, prefix="/api/sentiment", tags=["sentiment"])
 app.include_router(fusion.router, prefix="/api/fusion", tags=["fusion"])
 
+# Health Router to match frontend /api/health
+health_router = APIRouter()
 
-@app.get("/")
-async def root():
-    """Health check endpoint"""
-    return {
-        "status": "online",
-        "service": "Sentiviz API",
-        "version": "1.0.0"
-    }
-
-
-@app.get("/health")
+@health_router.get("/health")
 async def health_check():
     """Detailed health check"""
     return {
@@ -74,3 +66,19 @@ async def health_check():
             "fusion": "operational"
         }
     }
+
+@health_router.get("/")
+async def root():
+    """Root health check"""
+    return {
+        "status": "online",
+        "service": "Sentiviz API",
+        "version": "1.0.0"
+    }
+
+app.include_router(health_router, prefix="/api", tags=["health"])
+
+# Legacy root for backward compatibility
+@app.get("/")
+async def legacy_root():
+    return {"status": "online"}

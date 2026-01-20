@@ -98,11 +98,11 @@ async def update_sentiment_data(
         alpha: Weight for GDELT in fusion
     """
     try:
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         data = fusion_service.add_sentiment_data(
             ticker,
-            datetime.utcnow(),
+            datetime.now(timezone.utc),
             reddit_score,
             gdelt_score,
             alpha

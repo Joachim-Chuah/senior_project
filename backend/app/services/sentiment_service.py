@@ -5,7 +5,7 @@ Sentiment Service - Fetch and analyze sentiment from Reddit and GDELT
 import praw
 import requests
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import logging
@@ -91,7 +91,7 @@ class SentimentService:
                         subreddit=subreddit_name,
                         score=submission.score,
                         num_comments=submission.num_comments,
-                        created_utc=datetime.fromtimestamp(submission.created_utc),
+                        created_utc=datetime.fromtimestamp(submission.created_utc, tz=timezone.utc),
                         sentiment_score=sentiment_scores['compound'],
                         sentiment_positive=sentiment_scores['pos'],
                         sentiment_negative=sentiment_scores['neg'],
@@ -129,7 +129,7 @@ class SentimentService:
                 keywords = [ticker]
 
             # Get articles from last 15 minutes
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             start_time = now - timedelta(minutes=15)
 
             # Format: YYYYMMDDHHMMSS
@@ -182,6 +182,122 @@ class SentimentService:
         except Exception as e:
             logger.error(f"Error fetching GDELT sentiment for {ticker}: {e}")
             return []
+
+    async def get_sentiment_explanation(
+        self,
+        ticker: str,
+        reddit_posts: List[RedditPost],
+        gdelt_articles: List[GDELTArticle]
+    ) -> "SentimentExplanation":
+        """
+        Generate a detailed explanation for the current sentiment
+        """
+        from app.models.sentiment import SentimentExplanation, RedditExplanation, GDELTExplanation
+        
+        # 1. Process Reddit
+        reddit_score = 0.0
+        reddit_expl = None
+        if reddit_posts:
+            reddit_score = sum(p.sentiment_score for p in reddit_posts) / len(reddit_posts)
+            
+            # Count distribution
+            pos = sum(1 for p in reddit_posts if p.sentiment_score > 0.05)
+            neg = sum(1 for p in reddit_posts if p.sentiment_score < -0.05)
+            neu = len(reddit_posts) - pos - neg
+            
+            # Get top keywords (simple word count)
+            # In a real app, use NLP. For now, we'll extract tickers or words from titles
+            words = []
+            for p in reddit_posts:
+                words.extend(p.title.lower().split())
+            
+            # Filter common words (stop words)
+            stop_words = {'the', 'a', 'to', 'is', 'in', 'and', 'for', 'of', 'on', 'with', 'at', 'this', 'that', ticker.lower()}
+            word_counts = {}
+            for w in words:
+                if w.isalpha() and len(w) > 3 and w not in stop_words:
+                    word_counts[w] = word_counts.get(w, 0) + 1
+            
+            top_keywords = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+            
+            # Top posts
+            top_posts = [
+                {"title": p.title, "score": p.score, "sentiment": p.sentiment_score}
+                for p in sorted(reddit_posts, key=lambda x: abs(x.sentiment_score), reverse=True)[:3]
+            ]
+            
+            reddit_expl = RedditExplanation(
+                total_posts=len(reddit_posts),
+                positive_count=pos,
+                negative_count=neg,
+                neutral_count=neu,
+                top_keywords=[k for k, v in top_keywords],
+                top_posts=top_posts,
+                subreddits=list(set(p.subreddit for p in reddit_posts)),
+                average_score=reddit_score,
+                confidence=min(1.0, len(reddit_posts) / 20.0)
+            )
+
+        # 2. Process GDELT
+        gdelt_score = 0.0
+        gdelt_expl = None
+        if gdelt_articles:
+            gdelt_score = sum(a.tone for a in gdelt_articles) / len(gdelt_articles)
+            
+            pos = sum(1 for a in gdelt_articles if a.tone > 0.1)
+            neg = sum(1 for a in gdelt_articles if a.tone < -0.1)
+            neu = len(gdelt_articles) - pos - neg
+            
+            gdelt_expl = GDELTExplanation(
+                total_articles=len(gdelt_articles),
+                positive_count=pos,
+                negative_count=neg,
+                neutral_count=neu,
+                top_themes=[], # GDELT themes could be added if available in API
+                top_sources=list(set(a.source for a in gdelt_articles))[:5],
+                articles=gdelt_articles[:5], # Include top 5 articles
+                average_tone=gdelt_score,
+                confidence=min(1.0, len(gdelt_articles) / 10.0)
+            )
+
+        # 3. Fusion logic
+        alpha = self.settings.SENTIMENT_ALPHA
+        fusion_score = alpha * gdelt_score + (1 - alpha) * reddit_score
+        
+        # Determine regime and reasoning
+        if fusion_score > 0.3:
+            regime = "bullish"
+            regime_reasoning = f"Strong positive sentiment detected across {'both' if reddit_expl and gdelt_expl else 'available'} sources."
+        elif fusion_score < -0.3:
+            regime = "bearish"
+            regime_reasoning = f"Significant negative sentiment detected across {'both' if reddit_expl and gdelt_expl else 'available'} sources."
+        else:
+            regime = "neutral"
+            regime_reasoning = "Sentiment is currently mixed or low volume, suggesting a stable or indecisive market mood."
+
+        # Key factors summary
+        key_factors = []
+        if reddit_expl and reddit_expl.positive_count > reddit_expl.negative_count * 2:
+            key_factors.append(f"Strong Reddit bullishness ({reddit_expl.positive_count} pos vs {reddit_expl.negative_count} neg)")
+        if gdelt_expl and gdelt_expl.negative_count > gdelt_expl.positive_count * 2:
+            key_factors.append(f"Prevalent negative news coverage ({gdelt_expl.negative_count} neg articles)")
+        
+        if not key_factors:
+            key_factors.append("Balanced sentiment from available sources")
+
+        return SentimentExplanation(
+            ticker=ticker,
+            reddit_score=reddit_score,
+            gdelt_score=gdelt_score,
+            fusion_score=fusion_score,
+            reddit_weight=1 - alpha,
+            gdelt_weight=alpha,
+            regime=regime,
+            regime_reasoning=regime_reasoning,
+            reddit_explanation=reddit_expl,
+            gdelt_explanation=gdelt_expl,
+            key_factors=key_factors
+        )
 
     def _normalize_gdelt_tone(self, tone: float) -> float:
         """
