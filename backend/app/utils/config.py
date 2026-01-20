@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     # Black-Scholes Defaults
     RISK_FREE_RATE: float = 0.045  # 4.5% default risk-free rate
 
+    # Groq AI
+    GROQ_API_KEY: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = True

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 import OptionsChain from './components/OptionsChain';
-import SentimentView from './components/SentimentView';
+import AIAnalysis from './components/AIAnalysis';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -14,8 +14,8 @@ function App() {
         return <Dashboard />;
       case 'options':
         return <OptionsChain />;
-      case 'sentiment':
-        return <SentimentView />;
+      case 'ai':
+        return <AIAnalysis />;
       default:
         return <Dashboard />;
     }

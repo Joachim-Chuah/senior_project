@@ -1,11 +1,11 @@
 import React from 'react';
-import { LayoutDashboard, TrendingUp, MessageSquare, X, Menu } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Sparkles, X, Menu } from 'lucide-react';
 
 const Navbar = ({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobileMenuOpen }) => {
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'options', label: 'Options Chain', icon: TrendingUp },
-        { id: 'sentiment', label: 'Sentiment', icon: MessageSquare },
+        { id: 'ai', label: 'AI Analysis', icon: Sparkles },
     ];
 
     const handleNavClick = (tabId) => {
