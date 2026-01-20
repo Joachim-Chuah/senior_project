@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
+import { formatTime, safePercentage, getRegimeColor } from '../utils/helpers';
+import { getErrorMessage } from '../utils/errorHandler';
 import { AlertCircle, TrendingUp, TrendingDown, Info, MessageSquare, Newspaper, Calculator } from 'lucide-react';
 
 const SentimentExplanation = ({ ticker }) => {
@@ -11,12 +13,13 @@ const SentimentExplanation = ({ ticker }) => {
         const fetchExplanation = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`http://localhost:8000/api/sentiment/explanation/${ticker}`);
+                const response = await api.get(`/sentiment/explanation/${ticker}`);
                 setExplanation(response.data);
                 setError(null);
             } catch (err) {
                 console.error('Error fetching sentiment explanation:', err);
-                setError('Failed to load sentiment explanation data.');
+                const errorMsg = getErrorMessage(err);
+                setError(errorMsg);
             } finally {
                 setLoading(false);
             }
@@ -50,25 +53,10 @@ const SentimentExplanation = ({ ticker }) => {
         );
     }
 
-    const getRegimeColor = (regime) => {
-        switch (regime) {
-            case 'bullish': return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20';
-            case 'bearish': return 'text-rose-400 bg-rose-400/10 border-rose-400/20';
-            default: return 'text-slate-400 bg-slate-400/10 border-slate-400/20';
-        }
-    };
-
     const getSentimentIcon = (score) => {
         if (score > 0.1) return <TrendingUp size={16} className="text-emerald-400" />;
         if (score < -0.1) return <TrendingDown size={16} className="text-rose-400" />;
         return <Info size={16} className="text-slate-400" />;
-    };
-
-    const formatTime = (ts) => {
-        if (!ts) return '';
-        // If the timestamp doesn't end with Z, append it to force UTC parsing
-        const date = new Date(ts.endsWith('Z') || ts.includes('+') ? ts : `${ts}Z`);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     };
 
     return (
@@ -152,9 +140,9 @@ const SentimentExplanation = ({ ticker }) => {
                                     <span className="text-slate-200">{explanation.reddit_explanation.total_posts} posts</span>
                                 </div>
                                 <div className="flex gap-1 h-1.5 w-full rounded-full overflow-hidden bg-slate-700">
-                                    <div className="bg-emerald-500" style={{ width: `${(explanation.reddit_explanation.positive_count / explanation.reddit_explanation.total_posts) * 100}%` }}></div>
-                                    <div className="bg-slate-500" style={{ width: `${(explanation.reddit_explanation.neutral_count / explanation.reddit_explanation.total_posts) * 100}%` }}></div>
-                                    <div className="bg-rose-500" style={{ width: `${(explanation.reddit_explanation.negative_count / explanation.reddit_explanation.total_posts) * 100}%` }}></div>
+                                    <div className="bg-emerald-500" style={{ width: `${safePercentage(explanation.reddit_explanation.positive_count, explanation.reddit_explanation.total_posts)}%` }}></div>
+                                    <div className="bg-slate-500" style={{ width: `${safePercentage(explanation.reddit_explanation.neutral_count, explanation.reddit_explanation.total_posts)}%` }}></div>
+                                    <div className="bg-rose-500" style={{ width: `${safePercentage(explanation.reddit_explanation.negative_count, explanation.reddit_explanation.total_posts)}%` }}></div>
                                 </div>
                                 <div>
                                     <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-2 block">Top Buzzwords</span>
@@ -188,9 +176,9 @@ const SentimentExplanation = ({ ticker }) => {
                                     <span className="text-slate-200">{explanation.gdelt_explanation.total_articles} articles</span>
                                 </div>
                                 <div className="flex gap-1 h-1.5 w-full rounded-full overflow-hidden bg-slate-700">
-                                    <div className="bg-emerald-500" style={{ width: `${(explanation.gdelt_explanation.positive_count / explanation.gdelt_explanation.total_articles) * 100}%` }}></div>
-                                    <div className="bg-slate-500" style={{ width: `${(explanation.gdelt_explanation.neutral_count / explanation.gdelt_explanation.total_articles) * 100}%` }}></div>
-                                    <div className="bg-rose-500" style={{ width: `${(explanation.gdelt_explanation.negative_count / explanation.gdelt_explanation.total_articles) * 100}%` }}></div>
+                                    <div className="bg-emerald-500" style={{ width: `${safePercentage(explanation.gdelt_explanation.positive_count, explanation.gdelt_explanation.total_articles)}%` }}></div>
+                                    <div className="bg-slate-500" style={{ width: `${safePercentage(explanation.gdelt_explanation.neutral_count, explanation.gdelt_explanation.total_articles)}%` }}></div>
+                                    <div className="bg-rose-500" style={{ width: `${safePercentage(explanation.gdelt_explanation.negative_count, explanation.gdelt_explanation.total_articles)}%` }}></div>
                                 </div>
                                 <div>
                                     <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-2 block">Key Sources</span>

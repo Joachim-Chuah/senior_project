@@ -6,6 +6,7 @@ import SentimentView from './components/SentimentView';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -22,8 +23,13 @@ function App() {
 
   return (
     <div className="flex min-h-screen bg-gray-900 text-white">
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="flex-1 ml-64">
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
+      <main className="flex-1 lg:ml-64 pt-16 lg:pt-0">
         {renderContent()}
       </main>
     </div>

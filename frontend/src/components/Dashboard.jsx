@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, ArrowDownRight, Activity, DollarSign } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowUpRight, ArrowDownRight, Activity, DollarSign, AlertCircle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import axios from 'axios';
+import api from '../utils/api';
+import { validateTicker, formatChartTime } from '../utils/helpers';
+import { getErrorMessage } from '../utils/errorHandler';
 import SentimentExplanation from './SentimentExplanation';
 
 const StatCard = ({ title, value, change, icon: Icon, trend }) => (
@@ -36,49 +38,68 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [ticker, setTicker] = useState('AAPL');
     const [searchInput, setSearchInput] = useState('AAPL');
+    const [error, setError] = useState(null);
+    const [validationError, setValidationError] = useState(null);
+    const isFetchingRef = useRef(false);
 
     const handleSearch = (e) => {
         e.preventDefault();
-        const cleanTicker = searchInput.trim().toUpperCase();
-        if (cleanTicker) {
-            setTicker(cleanTicker);
+        setValidationError(null);
+
+        const validation = validateTicker(searchInput);
+        if (!validation.isValid) {
+            setValidationError(validation.error);
+            return;
         }
+
+        setTicker(validation.ticker);
     };
 
     useEffect(() => {
         const fetchData = async () => {
+            // Prevent multiple simultaneous requests
+            if (isFetchingRef.current) return;
+
             try {
+                isFetchingRef.current = true;
                 setLoading(true);
+                setError(null);
+
                 // Fetch Health
-                const healthRes = await axios.get('http://localhost:8000/api/health');
+                const healthRes = await api.get('/health');
                 setHealth(healthRes.data);
 
                 // Fetch Summary
-                const summaryRes = await axios.get(`http://localhost:8000/api/sentiment/summary/${ticker}`);
+                const summaryRes = await api.get(`/sentiment/summary/${ticker}`);
                 setSummary(summaryRes.data);
 
                 // Fetch Timeseries
-                const tsRes = await axios.get(`http://localhost:8000/api/fusion/timeseries/${ticker}`);
-                const formattedData = tsRes.data.data.map(item => {
-                    const ts = item.timestamp;
-                    const date = new Date(ts.endsWith('Z') || ts.includes('+') ? ts : `${ts}Z`);
-                    return {
-                        name: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        value: item.fusion_sentiment
-                    };
-                });
+                const tsRes = await api.get(`/fusion/timeseries/${ticker}`);
+                const formattedData = tsRes.data.data.map(item => ({
+                    name: formatChartTime(item.timestamp),
+                    value: item.fusion_sentiment
+                }));
                 setTimeseries(formattedData);
 
             } catch (err) {
+                const errorMsg = getErrorMessage(err);
+                setError(errorMsg);
                 console.error('Error fetching dashboard data:', err);
             } finally {
                 setLoading(false);
+                isFetchingRef.current = false;
             }
         };
+
         fetchData();
 
-        // Optional: Set up polling
-        const interval = setInterval(fetchData, 60000); // Refresh every minute
+        // Set up polling with race condition prevention
+        const interval = setInterval(() => {
+            if (!isFetchingRef.current) {
+                fetchData();
+            }
+        }, 60000); // Refresh every minute
+
         return () => clearInterval(interval);
     }, [ticker]);
 
@@ -90,24 +111,43 @@ const Dashboard = () => {
                     <p className="text-gray-400 mt-2">Real-time market sentiment and options analysis for <span className="text-indigo-400 font-mono font-bold tracking-wider">{ticker}</span></p>
                 </div>
 
-                <form onSubmit={handleSearch} className="flex items-center gap-2">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={searchInput}
-                            onChange={(e) => setSearchInput(e.target.value)}
-                            placeholder="Enter Ticker (e.g. TSLA)"
-                            className="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2 w-48 focus:outline-none focus:border-indigo-500 transition-colors uppercase font-mono"
-                        />
+                <form onSubmit={handleSearch} className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={searchInput}
+                                onChange={(e) => {
+                                    setSearchInput(e.target.value);
+                                    setValidationError(null);
+                                }}
+                                placeholder="Enter Ticker (e.g. TSLA)"
+                                className={`bg-gray-800 border ${validationError ? 'border-red-500' : 'border-gray-700'} text-white rounded-lg px-4 py-2 w-48 focus:outline-none focus:border-indigo-500 transition-colors uppercase font-mono`}
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={`bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-indigo-500/20 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            Search
+                        </button>
                     </div>
-                    <button
-                        type="submit"
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-indigo-500/20"
-                    >
-                        Search
-                    </button>
+                    {validationError && (
+                        <p className="text-red-400 text-sm">{validationError}</p>
+                    )}
                 </form>
             </header>
+
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
+                    <AlertCircle className="text-red-400" size={20} />
+                    <div>
+                        <p className="text-red-400 font-medium">Error Loading Data</p>
+                        <p className="text-red-300 text-sm">{error}</p>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
