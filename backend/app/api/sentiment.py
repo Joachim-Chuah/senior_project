@@ -7,7 +7,8 @@ from typing import List, Optional
 import logging
 
 from app.services.sentiment_service import SentimentService
-from app.models.sentiment import RedditPost, GDELTArticle, SentimentSummary, SentimentExplanation
+from app.services.stocktwits_service import StockTwitsService
+from app.models.sentiment import RedditPost, GDELTArticle, SentimentSummary, SentimentExplanation, SentimentSignal
 from app.utils.validation import validate_ticker
 from app.utils.errors import handle_api_error, TickerNotFoundError, ExternalAPIError
 
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 sentiment_service = SentimentService()
+stocktwits_service = StockTwitsService()
 
 
 @router.get("/reddit/{ticker}", response_model=List[RedditPost])
@@ -169,3 +171,26 @@ async def get_sentiment_summary(ticker: str):
     except Exception as e:
         logger.error(f"Error generating sentiment summary for {ticker}: {e}")
         raise handle_api_error(e, ticker, "generating sentiment summary")
+
+
+@router.get("/signal/{ticker}", response_model=SentimentSignal)
+async def get_sentiment_signal(ticker: str):
+    """
+    Get real-time sentiment signal from StockTwits
+
+    Returns:
+        SentimentSignal with bull/bear breakdown and supporting posts
+    """
+    try:
+        # Validate and normalize ticker
+        ticker = validate_ticker(ticker)
+
+        signal = await stocktwits_service.get_sentiment(ticker)
+
+        return signal
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching sentiment signal for {ticker}: {e}")
+        raise handle_api_error(e, ticker, "fetching sentiment signal")

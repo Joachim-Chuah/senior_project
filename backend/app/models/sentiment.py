@@ -98,23 +98,59 @@ class SentimentExplanation(BaseModel):
     """Complete explanation of sentiment analysis"""
     ticker: str
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    
+
     # Scores
     reddit_score: float
     gdelt_score: float
     fusion_score: float
-    
+
     # Weights
     reddit_weight: float
     gdelt_weight: float
-    
+
     # Regime
     regime: str
     regime_reasoning: str
-    
+
     # Detailed explanations
     reddit_explanation: Optional[RedditExplanation] = None
     gdelt_explanation: Optional[GDELTExplanation] = None
-    
+
     # Key factors
     key_factors: list[str] = Field(default_factory=list)
+
+
+# === StockTwits Models ===
+
+class StockTwitsPost(BaseModel):
+    """Individual StockTwits post"""
+    id: int
+    body: str
+    sentiment: Optional[str] = None  # "Bullish", "Bearish", or None
+    created_at: datetime
+    username: str
+    followers: int = 0
+    avatar_url: Optional[str] = None
+
+
+class SentimentSignal(BaseModel):
+    """Sentiment signal with bull/bear breakdown"""
+    ticker: str
+    signal: str  # "bullish", "bearish", "neutral"
+    score: float  # -1 to 1
+
+    # Counts
+    bullish_count: int
+    bearish_count: int
+    neutral_count: int
+    total_posts: int
+
+    # Posts for display
+    bullish_posts: List[StockTwitsPost] = Field(default_factory=list)
+    bearish_posts: List[StockTwitsPost] = Field(default_factory=list)
+
+    # Metadata
+    company_name: str
+    logo_url: Optional[str] = None
+    fetched_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    error: Optional[str] = None
