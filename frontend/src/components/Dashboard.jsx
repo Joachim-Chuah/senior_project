@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TrendingUp, TrendingDown, Minus, AlertCircle, MessageCircle, Users, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, AlertCircle, MessageCircle, Users, RefreshCw, Search } from 'lucide-react';
 import api from '../utils/api';
 import { validateTicker } from '../utils/helpers';
 import { getErrorMessage } from '../utils/errorHandler';
@@ -7,46 +7,50 @@ import { getErrorMessage } from '../utils/errorHandler';
 const SentimentBadge = ({ signal, score }) => {
     const config = {
         bullish: {
-            bg: 'bg-green-500/20',
-            border: 'border-green-500/50',
-            text: 'text-green-400',
+            bg: 'bg-emerald-50 dark:bg-emerald-500/10',
+            border: 'border-emerald-300 dark:border-emerald-500/30',
+            text: 'text-emerald-700 dark:text-emerald-400',
             icon: TrendingUp,
-            label: 'BULLISH'
+            label: 'Bullish'
         },
         bearish: {
-            bg: 'bg-red-500/20',
-            border: 'border-red-500/50',
-            text: 'text-red-400',
+            bg: 'bg-red-50 dark:bg-red-500/10',
+            border: 'border-red-300 dark:border-red-500/30',
+            text: 'text-red-700 dark:text-red-400',
             icon: TrendingDown,
-            label: 'BEARISH'
+            label: 'Bearish'
         },
         neutral: {
-            bg: 'bg-yellow-500/20',
-            border: 'border-yellow-500/50',
-            text: 'text-yellow-400',
+            bg: 'bg-amber-50 dark:bg-amber-500/10',
+            border: 'border-amber-300 dark:border-amber-500/30',
+            text: 'text-amber-700 dark:text-amber-400',
             icon: Minus,
-            label: 'NEUTRAL'
+            label: 'Neutral'
         }
     };
 
     const { bg, border, text, icon: Icon, label } = config[signal] || config.neutral;
 
     return (
-        <div className={`${bg} ${border} border-2 rounded-2xl p-6 flex items-center gap-4`}>
-            <div className={`${text} p-3 rounded-xl bg-gray-900/50`}>
-                <Icon size={32} />
+        <div className={`${bg} border border-dashed ${border} rounded-xl p-5 flex items-center gap-4`}>
+            <div className={`${text}`}>
+                <Icon size={26} />
             </div>
             <div>
-                <p className={`${text} text-3xl font-bold`}>{label}</p>
-                <p className="text-gray-400 text-sm">Score: {(score * 100).toFixed(0)}%</p>
+                <p className={`${text} text-xl font-bold`}>{label}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
+                    Confidence {(score * 100).toFixed(0)}%
+                </p>
             </div>
         </div>
     );
 };
 
 const PostCard = ({ post, type }) => {
-    const borderColor = type === 'bullish' ? 'border-green-500/30' : 'border-red-500/30';
-    const badgeColor = type === 'bullish' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400';
+    const dot = type === 'bullish' ? 'bg-emerald-500' : 'bg-red-500';
+    const badge = type === 'bullish'
+        ? 'border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-400'
+        : 'border-red-300 dark:border-red-500/40 text-red-700 dark:text-red-400';
 
     const formatTime = (dateStr) => {
         const date = new Date(dateStr);
@@ -54,36 +58,42 @@ const PostCard = ({ post, type }) => {
         const diffMs = now - date;
         const diffMins = Math.floor(diffMs / 60000);
         const diffHours = Math.floor(diffMins / 60);
-
         if (diffMins < 60) return `${diffMins}m ago`;
         if (diffHours < 24) return `${diffHours}h ago`;
         return date.toLocaleDateString();
     };
 
+    const initials = post.username ? post.username.slice(0, 2).toUpperCase() : '??';
+
     return (
-        <div className={`bg-gray-800/50 border ${borderColor} rounded-lg p-4 hover:bg-gray-800 transition-colors`}>
-            <div className="flex items-start justify-between gap-3 mb-2">
-                <div className="flex items-center gap-2">
-                    {post.avatar_url ? (
-                        <img src={post.avatar_url} alt="" className="w-6 h-6 rounded-full" />
-                    ) : (
-                        <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center">
-                            <Users size={12} className="text-gray-400" />
-                        </div>
-                    )}
-                    <span className="text-gray-400 text-sm">@{post.username}</span>
+        <div className="py-3 px-4 hover:bg-stone-50 dark:hover:bg-gray-800/40 transition-colors">
+            <div className="flex items-start gap-3">
+                {post.avatar_url ? (
+                    <img src={post.avatar_url} alt="" className="w-7 h-7 rounded-full flex-shrink-0 mt-0.5" />
+                ) : (
+                    <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-gray-600 dark:text-gray-300 text-xs font-semibold">{initials}</span>
+                    </div>
+                )}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className={`w-1.5 h-1.5 rounded-full ${dot} flex-shrink-0`} />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                            @{post.username}
+                        </span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded border border-dashed ${badge} ml-auto flex-shrink-0`}>
+                            {type === 'bullish' ? 'Bull' : 'Bear'}
+                        </span>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3">{post.body}</p>
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                        <span>{formatTime(post.created_at)}</span>
+                        <span className="flex items-center gap-1">
+                            <Users size={10} />
+                            {post.followers.toLocaleString()}
+                        </span>
+                    </div>
                 </div>
-                <span className={`${badgeColor} text-xs px-2 py-1 rounded-full font-medium`}>
-                    {type === 'bullish' ? 'BULL' : 'BEAR'}
-                </span>
-            </div>
-            <p className="text-gray-200 text-sm leading-relaxed">{post.body}</p>
-            <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                <span>{formatTime(post.created_at)}</span>
-                <span className="flex items-center gap-1">
-                    <Users size={12} />
-                    {post.followers.toLocaleString()} followers
-                </span>
             </div>
         </div>
     );
@@ -102,31 +112,25 @@ const Dashboard = () => {
     const handleSearch = (e) => {
         e.preventDefault();
         setValidationError(null);
-
         const validation = validateTicker(searchInput);
         if (!validation.isValid) {
             setValidationError(validation.error);
             return;
         }
-
         setTicker(validation.ticker);
     };
 
     const fetchData = async () => {
         if (isFetchingRef.current) return;
-
         try {
             isFetchingRef.current = true;
             setLoading(true);
             setError(null);
-
             const res = await api.get(`/sentiment/signal/${ticker}`);
             setSignal(res.data);
             setLastRefresh(new Date());
-
         } catch (err) {
-            const errorMsg = getErrorMessage(err);
-            setError(errorMsg);
+            setError(getErrorMessage(err));
             console.error('Error fetching sentiment signal:', err);
         } finally {
             setLoading(false);
@@ -136,48 +140,47 @@ const Dashboard = () => {
 
     useEffect(() => {
         fetchData();
-
-        // Refresh every 2 minutes
         const interval = setInterval(() => {
-            if (!isFetchingRef.current) {
-                fetchData();
-            }
+            if (!isFetchingRef.current) fetchData();
         }, 120000);
-
         return () => clearInterval(interval);
     }, [ticker]);
 
     return (
-        <div className="p-8 space-y-8">
+        <div className="p-6 lg:p-8 space-y-6">
             {/* Header */}
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-dashed border-gray-300 dark:border-gray-700">
                 <div>
-                    <h2 className="text-3xl font-bold text-white">Sentiment Dashboard</h2>
-                    <p className="text-gray-400 mt-2">
-                        Real-time social sentiment for{' '}
-                        <span className="text-indigo-400 font-mono font-bold tracking-wider">{ticker}</span>
+                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        Sentiment Dashboard
+                    </h2>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+                        <span className="font-mono font-semibold text-gray-800 dark:text-indigo-400">{ticker}</span>
                         {signal?.company_name && signal.company_name !== ticker && (
-                            <span className="text-gray-500"> ({signal.company_name})</span>
+                            <span className="text-gray-400 dark:text-gray-500"> · {signal.company_name}</span>
                         )}
                     </p>
                 </div>
 
-                <form onSubmit={handleSearch} className="flex flex-col items-end gap-2">
+                <form onSubmit={handleSearch} className="flex flex-col items-end gap-1.5">
                     <div className="flex items-center gap-2">
-                        <input
-                            type="text"
-                            value={searchInput}
-                            onChange={(e) => {
-                                setSearchInput(e.target.value.toUpperCase());
-                                setValidationError(null);
-                            }}
-                            placeholder="Enter Ticker"
-                            className={`bg-gray-800 border ${validationError ? 'border-red-500' : 'border-gray-700'} text-white rounded-lg px-4 py-2 w-32 focus:outline-none focus:border-indigo-500 uppercase font-mono`}
-                        />
+                        <div className="relative">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                value={searchInput}
+                                onChange={(e) => {
+                                    setSearchInput(e.target.value.toUpperCase());
+                                    setValidationError(null);
+                                }}
+                                placeholder="Ticker"
+                                className={`bg-white dark:bg-gray-800 border border-dashed ${validationError ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white rounded-lg pl-8 pr-3 py-2 w-28 focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 uppercase font-mono text-sm theme-transition`}
+                            />
+                        </div>
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className="bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-lg font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Search
                         </button>
@@ -185,107 +188,108 @@ const Dashboard = () => {
                             type="button"
                             onClick={fetchData}
                             disabled={loading}
-                            className={`bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className="bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Refresh"
                         >
-                            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
                         </button>
                     </div>
-                    {validationError && (
-                        <p className="text-red-400 text-sm">{validationError}</p>
-                    )}
+                    {validationError && <p className="text-red-500 text-xs">{validationError}</p>}
                 </form>
             </header>
 
-            {/* Error Display */}
+            {/* Error */}
             {error && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
-                    <AlertCircle className="text-red-400" size={20} />
+                <div className="bg-red-50 dark:bg-red-500/10 border border-dashed border-red-300 dark:border-red-500/30 rounded-lg p-4 flex items-center gap-3">
+                    <AlertCircle className="text-red-500 dark:text-red-400 flex-shrink-0" size={17} />
                     <div>
-                        <p className="text-red-400 font-medium">Error Loading Data</p>
-                        <p className="text-red-300 text-sm">{error}</p>
+                        <p className="text-red-700 dark:text-red-400 font-medium text-sm">Error Loading Data</p>
+                        <p className="text-red-500 dark:text-red-300 text-xs mt-0.5">{error}</p>
                     </div>
                 </div>
             )}
 
-            {/* Loading State */}
             {loading && !signal ? (
                 <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-800 dark:border-white"></div>
                 </div>
             ) : signal ? (
                 <>
-                    {/* Signal Header */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Stat Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <SentimentBadge signal={signal.signal} score={signal.score} />
 
-                        <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-                            <p className="text-gray-400 text-sm mb-1">Posts Analyzed</p>
-                            <p className="text-2xl font-bold text-white">{signal.total_posts}</p>
-                            <div className="flex gap-4 mt-2 text-sm">
-                                <span className="text-green-400">{signal.bullish_count} bullish</span>
-                                <span className="text-red-400">{signal.bearish_count} bearish</span>
-                                <span className="text-gray-400">{signal.neutral_count} neutral</span>
+                        <div className="bg-white dark:bg-gray-900 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-5 theme-transition">
+                            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Posts Analyzed</p>
+                            <p className="text-3xl font-bold text-gray-900 dark:text-white">{signal.total_posts}</p>
+                            <div className="flex flex-wrap gap-2 mt-3">
+                                <span className="text-xs px-2 py-1 rounded border border-dashed border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-400">
+                                    {signal.bullish_count} bull
+                                </span>
+                                <span className="text-xs px-2 py-1 rounded border border-dashed border-red-300 dark:border-red-500/40 text-red-700 dark:text-red-400">
+                                    {signal.bearish_count} bear
+                                </span>
+                                <span className="text-xs px-2 py-1 rounded border border-dashed border-amber-300 dark:border-amber-500/40 text-amber-700 dark:text-amber-400">
+                                    {signal.neutral_count} neutral
+                                </span>
                             </div>
                         </div>
 
-                        <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-                            <p className="text-gray-400 text-sm mb-1">Source</p>
-                            <p className="text-xl font-bold text-white flex items-center gap-2">
-                                <MessageCircle size={20} className="text-indigo-400" />
+                        <div className="bg-white dark:bg-gray-900 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-5 theme-transition">
+                            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Data Source</p>
+                            <p className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <MessageCircle size={17} className="text-gray-500 dark:text-gray-400" />
                                 StockTwits
                             </p>
                             {lastRefresh && (
-                                <p className="text-gray-500 text-sm mt-2">
+                                <p className="text-gray-400 dark:text-gray-500 text-xs mt-2">
                                     Updated {lastRefresh.toLocaleTimeString()}
                                 </p>
                             )}
                         </div>
                     </div>
 
-                    {/* Bull vs Bear Cases */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Bull Case */}
-                        <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-                            <div className="p-4 bg-green-500/10 border-b border-green-500/20">
-                                <h3 className="text-lg font-bold text-green-400 flex items-center gap-2">
-                                    <TrendingUp size={20} />
-                                    Bull Case ({signal.bullish_count})
-                                </h3>
+                    {/* Feed Columns */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Bull */}
+                        <div className="bg-white dark:bg-gray-900 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 overflow-hidden theme-transition">
+                            <div className="px-4 py-3 border-b border-dashed border-gray-200 dark:border-gray-700 flex items-center gap-2">
+                                <TrendingUp size={15} className="text-emerald-600 dark:text-emerald-400" />
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Bull Case</h3>
+                                <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{signal.bullish_count} posts</span>
                             </div>
-                            <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto">
+                            <div className="max-h-[520px] overflow-y-auto scrollbar-thin divide-y divide-gray-100 dark:divide-gray-800">
                                 {signal.bullish_posts.length > 0 ? (
                                     signal.bullish_posts.map((post) => (
                                         <PostCard key={post.id} post={post} type="bullish" />
                                     ))
                                 ) : (
-                                    <p className="text-gray-500 text-center py-8">No bullish posts found</p>
+                                    <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-10">No bullish posts found</p>
                                 )}
                             </div>
                         </div>
 
-                        {/* Bear Case */}
-                        <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-                            <div className="p-4 bg-red-500/10 border-b border-red-500/20">
-                                <h3 className="text-lg font-bold text-red-400 flex items-center gap-2">
-                                    <TrendingDown size={20} />
-                                    Bear Case ({signal.bearish_count})
-                                </h3>
+                        {/* Bear */}
+                        <div className="bg-white dark:bg-gray-900 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 overflow-hidden theme-transition">
+                            <div className="px-4 py-3 border-b border-dashed border-gray-200 dark:border-gray-700 flex items-center gap-2">
+                                <TrendingDown size={15} className="text-red-600 dark:text-red-400" />
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Bear Case</h3>
+                                <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{signal.bearish_count} posts</span>
                             </div>
-                            <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto">
+                            <div className="max-h-[520px] overflow-y-auto scrollbar-thin divide-y divide-gray-100 dark:divide-gray-800">
                                 {signal.bearish_posts.length > 0 ? (
                                     signal.bearish_posts.map((post) => (
                                         <PostCard key={post.id} post={post} type="bearish" />
                                     ))
                                 ) : (
-                                    <p className="text-gray-500 text-center py-8">No bearish posts found</p>
+                                    <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-10">No bearish posts found</p>
                                 )}
                             </div>
                         </div>
                     </div>
                 </>
             ) : (
-                <div className="text-center text-gray-500 mt-20">
+                <div className="text-center text-gray-400 dark:text-gray-500 mt-20 text-sm">
                     <p>Enter a ticker to view sentiment data</p>
                 </div>
             )}
