@@ -15,10 +15,6 @@ scipy==1.16.2
 # Options data
 yfinance>=1.0
 
-# Sentiment analysis
-vaderSentiment==3.3.2
-praw==7.8.1
-
 # HTTP requests
 requests==2.32.3
 
