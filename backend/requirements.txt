@@ -35,3 +35,6 @@ python-dotenv==1.0.1
 # AI/LLM
 groq>=0.4.0
 tavily-python>=0.3.0
+
+# ML
+scikit-learn>=1.4.0

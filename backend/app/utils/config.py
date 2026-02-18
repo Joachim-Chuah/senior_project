@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     # Tavily Web Search
     TAVILY_API_KEY: str = ""
 
+    # Financial Modeling Prep
+    FMP_API_KEY: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = True

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
-from app.api import options, sentiment, ai
+from app.api import sentiment, ai, confidence
 from app.utils.config import get_settings
 
 # Configure logging
@@ -48,7 +48,7 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(options.router, prefix="/api/options", tags=["options"])
+app.include_router(confidence.router, prefix="/api/confidence", tags=["confidence"])
 app.include_router(sentiment.router, prefix="/api/sentiment", tags=["sentiment"])
 app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 
@@ -61,7 +61,7 @@ async def health_check():
     return {
         "status": "healthy",
         "services": {
-            "options": "operational",
+            "confidence": "operational",
             "sentiment": "operational",
             "ai": "operational"
         }
