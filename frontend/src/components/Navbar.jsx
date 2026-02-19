@@ -1,7 +1,7 @@
 import React from 'react';
 import { LayoutDashboard, BrainCircuit, Sparkles, BarChart2, Sun, Moon } from 'lucide-react';
 
-const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode }) => {
+const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick }) => {
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'confidence', label: 'Confidence', icon: BrainCircuit },
@@ -11,12 +11,15 @@ const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode }) => {
     return (
         <nav className="fixed top-0 left-0 right-0 h-14 z-40 bg-white dark:bg-gray-900 border-b border-dashed border-gray-200 dark:border-gray-800 flex items-center px-5 gap-6 theme-transition">
             {/* Logo */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+                onClick={onLogoClick}
+                className="flex items-center gap-2 flex-shrink-0 hover:opacity-70 transition-opacity"
+            >
                 <div className="w-7 h-7 bg-gray-900 dark:bg-white rounded-md flex items-center justify-center">
                     <BarChart2 size={14} className="text-white dark:text-gray-900" />
                 </div>
                 <span className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">Sentiviz</span>
-            </div>
+            </button>
 
             {/* Divider */}
             <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 flex-shrink-0" />

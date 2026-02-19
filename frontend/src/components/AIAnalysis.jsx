@@ -34,8 +34,8 @@ const SuggestedQuestion = ({ question, onClick }) => (
 );
 
 const AIAnalysis = () => {
-    const [ticker, setTicker] = useState('AAPL');
-    const [searchInput, setSearchInput] = useState('AAPL');
+    const [ticker, setTicker] = useState('');
+    const [searchInput, setSearchInput] = useState('');
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [loading, setLoading] = useState(false);
@@ -129,8 +129,8 @@ const AIAnalysis = () => {
                                 setSearchInput(e.target.value.toUpperCase());
                                 setValidationError(null);
                             }}
-                            placeholder="Ticker"
-                            className={`bg-white dark:bg-gray-800 border border-dashed ${validationError ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white rounded-lg px-3 py-2 w-24 focus:outline-none focus:ring-2 focus:ring-gray-400/20 uppercase font-mono text-sm theme-transition`}
+                            placeholder="Search Stocks & ETFs"
+                            className={`bg-white dark:bg-gray-800 border border-dashed ${validationError ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white rounded-lg px-3 py-2 w-52 focus:outline-none focus:ring-2 focus:ring-gray-400/20 uppercase font-mono text-sm theme-transition`}
                         />
                         <button
                             type="submit"

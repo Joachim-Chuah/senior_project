@@ -91,8 +91,8 @@ const FeatureRow = ({ label, value }) => {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const Confidence = () => {
-    const [searchInput, setSearchInput] = useState('AAPL');
-    const [ticker, setTicker] = useState('AAPL');
+    const [searchInput, setSearchInput] = useState('');
+    const [ticker, setTicker] = useState('');
     const [horizon, setHorizon] = useState(1);
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -128,8 +128,8 @@ const Confidence = () => {
         if (result) runAnalysis(ticker, h);
     };
 
-    // Run on first mount with defaults
-    useEffect(() => { runAnalysis(ticker, horizon); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // Run on first mount only if a ticker is already set
+    useEffect(() => { if (ticker) runAnalysis(ticker, horizon); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const isUp = result?.direction === 'up';
 
@@ -155,8 +155,8 @@ const Confidence = () => {
                             type="text"
                             value={searchInput}
                             onChange={(e) => { setSearchInput(e.target.value.toUpperCase()); setValidationError(null); }}
-                            placeholder="Ticker"
-                            className={`bg-white dark:bg-gray-800 border border-dashed ${validationError ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white rounded-lg px-3 py-2 w-24 focus:outline-none focus:ring-2 focus:ring-gray-400/20 uppercase font-mono text-sm theme-transition`}
+                            placeholder="Search Stocks & ETFs"
+                            className={`bg-white dark:bg-gray-800 border border-dashed ${validationError ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white rounded-lg px-3 py-2 w-52 focus:outline-none focus:ring-2 focus:ring-gray-400/20 uppercase font-mono text-sm theme-transition`}
                         />
 
                         {/* Horizon selector */}

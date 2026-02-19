@@ -102,8 +102,8 @@ const PostCard = ({ post, type }) => {
 const Dashboard = () => {
     const [signal, setSignal] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [ticker, setTicker] = useState('AAPL');
-    const [searchInput, setSearchInput] = useState('AAPL');
+    const [ticker, setTicker] = useState('');
+    const [searchInput, setSearchInput] = useState('');
     const [error, setError] = useState(null);
     const [validationError, setValidationError] = useState(null);
     const [lastRefresh, setLastRefresh] = useState(null);
@@ -139,6 +139,7 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
+        if (!ticker) return;
         fetchData();
         const interval = setInterval(() => {
             if (!isFetchingRef.current) fetchData();
@@ -173,8 +174,8 @@ const Dashboard = () => {
                                     setSearchInput(e.target.value.toUpperCase());
                                     setValidationError(null);
                                 }}
-                                placeholder="Ticker"
-                                className={`bg-white dark:bg-gray-800 border border-dashed ${validationError ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white rounded-lg pl-8 pr-3 py-2 w-28 focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 uppercase font-mono text-sm theme-transition`}
+                                placeholder="Search Stocks & ETFs"
+                                className={`bg-white dark:bg-gray-800 border border-dashed ${validationError ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white rounded-lg pl-8 pr-3 py-2 w-52 focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 uppercase font-mono text-sm theme-transition`}
                             />
                         </div>
                         <button
