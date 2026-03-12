@@ -4,10 +4,12 @@ Computes features, runs rule-based or fitted logistic regression, and
 returns a ConfidenceResult for a given ticker + horizon.
 """
 
+import json
 import math
 import logging
 from collections import defaultdict, deque
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -59,6 +61,8 @@ class ConfidenceService:
     a logistic regression model per (ticker, horizon) pair.
     """
 
+    _STATE_PATH = Path(__file__).parent.parent.parent / "data" / "confidence_state.json"
+
     def __init__(self, stocktwits: StockTwitsService, fmp: FMPService):
         self._stocktwits = stocktwits
         self._fmp = fmp
@@ -70,7 +74,52 @@ class ConfidenceService:
         self._observations: dict[tuple, list] = defaultdict(list)
 
         # Fitted models: (ticker, horizon) → (model, brier_score)
+        # Not persisted — retrained from observations on demand
         self._models: dict[tuple, tuple] = {}
+
+        self._load_state()
+
+    # ─── State persistence ────────────────────────────────────────────────────
+
+    def _load_state(self):
+        """Load observations and sentiment history from disk if available."""
+        if not self._STATE_PATH.exists():
+            return
+        try:
+            with self._STATE_PATH.open("r") as f:
+                data = json.load(f)
+
+            for ticker, vals in data.get("sent_history", {}).items():
+                self._sent_history[ticker] = deque(vals, maxlen=5)
+
+            for key_str, obs in data.get("observations", {}).items():
+                ticker, horizon_str = key_str.rsplit("_", 1)
+                key = (ticker, int(horizon_str))
+                self._observations[key] = [(entry[0], entry[1]) for entry in obs]
+
+            total_obs = sum(len(v) for v in self._observations.values())
+            logger.info(f"Loaded confidence state: {total_obs} observations across {len(self._observations)} keys")
+        except Exception as e:
+            logger.warning(f"Could not load confidence state: {e}")
+
+    def _save_state(self):
+        """Persist observations and sentiment history to disk."""
+        try:
+            self._STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            data = {
+                "sent_history": {
+                    ticker: list(vals)
+                    for ticker, vals in self._sent_history.items()
+                },
+                "observations": {
+                    f"{ticker}_{horizon}": obs
+                    for (ticker, horizon), obs in self._observations.items()
+                },
+            }
+            with self._STATE_PATH.open("w") as f:
+                json.dump(data, f)
+        except Exception as e:
+            logger.warning(f"Could not save confidence state: {e}")
 
     # ─── Public entry point ───────────────────────────────────────────────────
 
@@ -89,6 +138,7 @@ class ConfidenceService:
             sent_score - float(np.mean(list(history))) if history else 0.0
         )
         history.append(sent_score)
+        self._save_state()
 
         # 2. Market / price features (yfinance)
         recent_return_5d, realized_vol_20d, market_regime = await self._price_features(ticker)
@@ -169,6 +219,7 @@ class ConfidenceService:
         self._observations[key].append((fvec, outcome))
         # Invalidate cached model so it gets retrained on next call
         self._models.pop(key, None)
+        self._save_state()
 
     # ─── Feature helpers ──────────────────────────────────────────────────────
 

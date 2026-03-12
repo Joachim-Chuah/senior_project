@@ -36,6 +36,9 @@ htmlcov/
 *.sqlite
 *.sqlite3
 
+# Persisted service state
+data/
+
 # Logs
 *.log
 logs/
