@@ -17,6 +17,7 @@ yfinance>=1.0
 
 # HTTP requests
 requests==2.32.3
+feedparser>=6.0.0
 
 # Redis (optional)
 redis==5.2.1

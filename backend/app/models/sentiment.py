@@ -18,6 +18,18 @@ class StockTwitsPost(BaseModel):
     avatar_url: Optional[str] = None
 
 
+class SentimentSummary(BaseModel):
+    """Lightweight sentiment summary — no posts, for the overview grid"""
+    ticker: str
+    company_name: str
+    signal: str
+    score: float
+    bullish_count: int
+    bearish_count: int
+    total_posts: int
+    error: Optional[str] = None
+
+
 class SentimentSignal(BaseModel):
     """Sentiment signal with bull/bear breakdown"""
     ticker: str
