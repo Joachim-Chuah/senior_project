@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import Home from './components/Home';
 import Dashboard from './components/Dashboard';
 import Confidence from './components/Confidence';
 import AIAnalysis from './components/AIAnalysis';
@@ -7,7 +8,7 @@ import Landing from './components/Landing';
 
 function App() {
   const [launched, setLaunched] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('home');
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem('darkMode');
     if (stored !== null) return stored === 'true';
@@ -27,6 +28,8 @@ function App() {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'home':
+        return <Home />;
       case 'dashboard':
         return <Dashboard />;
       case 'confidence':
@@ -34,7 +37,7 @@ function App() {
       case 'ai':
         return <AIAnalysis />;
       default:
-        return <Dashboard />;
+        return <Home />;
     }
   };
 

@@ -1,8 +1,9 @@
 import React from 'react';
-import { LayoutDashboard, BrainCircuit, Sparkles, BarChart2, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, BrainCircuit, Sparkles, BarChart2, Sun, Moon, Home } from 'lucide-react';
 
 const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick }) => {
     const navItems = [
+        { id: 'home', label: 'Home', icon: Home },
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'confidence', label: 'Confidence', icon: BrainCircuit },
         { id: 'ai', label: 'AI Analysis', icon: Sparkles },
