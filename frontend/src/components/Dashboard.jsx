@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { TrendingUp, TrendingDown, Minus, AlertCircle, MessageCircle, Users, RefreshCw, Search, ArrowLeft, Newspaper } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, AlertCircle, MessageCircle, Users, RefreshCw, ArrowLeft, Newspaper } from 'lucide-react';
 import api from '../utils/api';
-import { validateTicker } from '../utils/helpers';
 import { getErrorMessage } from '../utils/errorHandler';
+import TickerSearch from './TickerSearch';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -207,7 +207,7 @@ const NewsFeed = () => {
 
 // ─── Overview view ────────────────────────────────────────────────────────────
 
-const OverviewPanel = ({ onSelectTicker, searchInput, setSearchInput, onSearch, validationError, loading }) => {
+const OverviewPanel = ({ onSelectTicker }) => {
     const [overview, setOverview] = useState([]);
     const [overviewLoading, setOverviewLoading] = useState(true);
     const [overviewError, setOverviewError] = useState(null);
@@ -234,37 +234,18 @@ const OverviewPanel = ({ onSelectTicker, searchInput, setSearchInput, onSearch, 
                     <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Sentiment Dashboard</h2>
                     <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Market sentiment via StockTwits</p>
                 </div>
-                <form onSubmit={onSearch} className="flex flex-col items-end gap-1.5">
-                    <div className="flex items-center gap-2">
-                        <div className="relative">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
-                                placeholder="Search Stocks & ETFs"
-                                className={`bg-white dark:bg-gray-800 border border-dashed ${validationError ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white rounded-lg pl-8 pr-3 py-2 w-52 focus:outline-none focus:ring-2 focus:ring-gray-400/20 focus:border-gray-400 uppercase font-mono text-sm theme-transition`}
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
-                        >
-                            Search
-                        </button>
-                        <button
-                            type="button"
-                            onClick={fetchOverview}
-                            disabled={overviewLoading}
-                            className="bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-2 rounded-lg transition-colors disabled:opacity-50"
-                            title="Refresh"
-                        >
-                            <RefreshCw size={15} className={overviewLoading ? 'animate-spin' : ''} />
-                        </button>
-                    </div>
-                    {validationError && <p className="text-red-500 text-xs">{validationError}</p>}
-                </form>
+                <div className="flex items-center gap-2">
+                    <TickerSearch onSelect={onSelectTicker} />
+                    <button
+                        type="button"
+                        onClick={fetchOverview}
+                        disabled={overviewLoading}
+                        className="bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-2 rounded-lg transition-colors disabled:opacity-50"
+                        title="Refresh"
+                    >
+                        <RefreshCw size={15} className={overviewLoading ? 'animate-spin' : ''} />
+                    </button>
+                </div>
             </header>
 
             {overviewError && (
@@ -437,38 +418,12 @@ const DetailPanel = ({ ticker, onBack }) => {
 
 const Dashboard = () => {
     const [ticker, setTicker] = useState(null);
-    const [searchInput, setSearchInput] = useState('');
-    const [validationError, setValidationError] = useState(null);
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        setValidationError(null);
-        const validation = validateTicker(searchInput);
-        if (!validation.isValid) {
-            setValidationError(validation.error);
-            return;
-        }
-        setTicker(validation.ticker);
-        setSearchInput('');
-    };
-
-    const handleSelectTicker = (t) => setTicker(t);
-    const handleBack = () => setTicker(null);
 
     if (ticker) {
-        return <DetailPanel ticker={ticker} onBack={handleBack} />;
+        return <DetailPanel ticker={ticker} onBack={() => setTicker(null)} />;
     }
 
-    return (
-        <OverviewPanel
-            onSelectTicker={handleSelectTicker}
-            searchInput={searchInput}
-            setSearchInput={(v) => { setSearchInput(v); setValidationError(null); }}
-            onSearch={handleSearch}
-            validationError={validationError}
-            loading={false}
-        />
-    );
+    return <OverviewPanel onSelectTicker={(t) => setTicker(t)} />;
 };
 
 export default Dashboard;

@@ -9,14 +9,17 @@ from typing import List
 
 from app.services.stocktwits_service import StockTwitsService
 from app.services.rss_service import fetch_news
+from app.services.fmp_service import FMPService
 from app.models.sentiment import SentimentSignal, SentimentSummary
 from app.utils.validation import validate_ticker
 from app.utils.errors import handle_api_error
+from app.utils.config import get_settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 stocktwits_service = StockTwitsService()
+_fmp = FMPService(api_key=get_settings().FMP_API_KEY)
 
 DEFAULT_TICKERS = ["AAPL", "TSLA", "NVDA", "MSFT", "AMZN", "META", "GOOGL", "SPY"]
 
@@ -87,3 +90,13 @@ async def get_news(limit: int = Query(default=30, le=60)):
     loop = asyncio.get_event_loop()
     items = await loop.run_in_executor(None, lambda: fetch_news(limit))
     return items
+
+
+@router.get("/search")
+async def search_tickers(query: str = Query(default="", min_length=1)):
+    """Search for ticker symbols via FMP — returns symbol, name, exchange."""
+    if not query.strip():
+        return []
+    loop = asyncio.get_event_loop()
+    results = await loop.run_in_executor(None, lambda: _fmp.search_symbols(query.strip()))
+    return results

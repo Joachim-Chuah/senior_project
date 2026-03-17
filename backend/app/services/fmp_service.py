@@ -87,6 +87,19 @@ class FMPService:
         data = self._get_stable("news/stock-latest", {"page": 0, "limit": limit})
         return data if isinstance(data, list) else []
 
+    def search_symbols(self, query: str, limit: int = 8) -> List[Dict[str, Any]]:
+        """Search tickers by symbol prefix, filtered to major US exchanges."""
+        data = self._get_stable("search-symbol", {"query": query.upper(), "limit": 20})
+        if not isinstance(data, list):
+            return []
+        us_exchanges = {"NASDAQ", "NYSE", "AMEX", "NYSE ARCA", "NYSE MKT"}
+        filtered = [
+            r for r in data
+            if r.get("exchange", "").upper() in us_exchanges
+            and "." not in r.get("symbol", "")
+        ]
+        return filtered[:limit]
+
     def get_quotes(self, symbols: List[str]) -> List[Dict[str, Any]]:
         """Return quotes for a list of symbols — one request per symbol (free tier limit)."""
         results = []

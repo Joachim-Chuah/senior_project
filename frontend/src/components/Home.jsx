@@ -2,11 +2,87 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, TrendingUp, TrendingDown, Activity, Newspaper, AlertCircle } from 'lucide-react';
 import api from '../utils/api';
 
+// ─── Logo helpers ─────────────────────────────────────────────────────────────
+
+const TICKER_DOMAINS = {
+  SPY: 'ssga.com',
+  AAPL: 'apple.com',
+  MSFT: 'microsoft.com',
+  NVDA: 'nvidia.com',
+  TSLA: 'tesla.com',
+  AMZN: 'amazon.com',
+  META: 'meta.com',
+  GOOGL: 'google.com',
+  GOOG: 'google.com',
+  NFLX: 'netflix.com',
+  GOOG: 'google.com',
+  AMD: 'amd.com',
+  INTC: 'intel.com',
+  JPM: 'jpmorganchase.com',
+  BAC: 'bankofamerica.com',
+  WMT: 'walmart.com',
+  DIS: 'disney.com',
+  PYPL: 'paypal.com',
+  UBER: 'uber.com',
+  SHOP: 'shopify.com',
+  CRM: 'salesforce.com',
+  ORCL: 'oracle.com',
+  CSCO: 'cisco.com',
+  QCOM: 'qualcomm.com',
+  IBM: 'ibm.com',
+};
+
+function getLogoUrl(ticker) {
+  const domain = TICKER_DOMAINS[ticker] || `${ticker.toLowerCase()}.com`;
+  return `https://logo.clearbit.com/${domain}`;
+}
+
+// Consistent color per ticker for the fallback avatar
+const FALLBACK_COLORS = [
+  'bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-orange-500',
+  'bg-pink-500', 'bg-indigo-500', 'bg-teal-500', 'bg-rose-500',
+];
+
+function tickerColor(ticker) {
+  let n = 0;
+  for (let i = 0; i < ticker.length; i++) n += ticker.charCodeAt(i);
+  return FALLBACK_COLORS[n % FALLBACK_COLORS.length];
+}
+
+function TickerLogo({ ticker, size = 32, className = '' }) {
+  const [failed, setFailed] = useState(false);
+  const px = `${size}px`;
+
+  if (failed) {
+    return (
+      <div
+        className={`${tickerColor(ticker)} rounded-lg flex items-center justify-center flex-shrink-0 ${className}`}
+        style={{ width: px, height: px }}
+      >
+        <span className="text-white font-bold" style={{ fontSize: size * 0.35 }}>
+          {ticker.slice(0, 2)}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={getLogoUrl(ticker)}
+      alt={ticker}
+      onError={() => setFailed(true)}
+      className={`rounded-lg object-contain flex-shrink-0 bg-white ${className}`}
+      style={{ width: px, height: px }}
+    />
+  );
+}
+
+// ─── Formatters ───────────────────────────────────────────────────────────────
+
 function formatPct(val) {
   const n = parseFloat(val);
   if (isNaN(n)) return '—';
-  const sign = n >= 0 ? '+' : '';
-  return `${sign}${n.toFixed(2)}%`;
+  return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 }
 
 function formatPrice(val) {
@@ -25,27 +101,34 @@ function formatVolume(val) {
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
-  const then = new Date(dateStr);
-  const diff = Math.floor((Date.now() - then.getTime()) / 1000);
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
   if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
+// ─── Components ───────────────────────────────────────────────────────────────
+
 function IndexCard({ quote }) {
   const up = quote.changesPercentage >= 0;
   return (
     <div className="flex-1 min-w-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{quote.symbol}</span>
-        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${up ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-          {formatPct(quote.changesPercentage)}
-        </span>
+      <div className="flex items-center gap-3 mb-3">
+        <TickerLogo ticker={quote.symbol} size={38} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-bold text-gray-900 dark:text-white">{quote.symbol}</span>
+            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${up ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+              {formatPct(quote.changesPercentage)}
+            </span>
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{quote.name}</p>
+        </div>
       </div>
-      <div className="text-lg font-bold text-gray-900 dark:text-white">{formatPrice(quote.price)}</div>
+      <div className="text-xl font-bold text-gray-900 dark:text-white">{formatPrice(quote.price)}</div>
       <div className={`text-xs mt-0.5 ${up ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-        {up ? '+' : ''}{parseFloat(quote.change).toFixed(2)}
+        {up ? '+' : ''}{parseFloat(quote.change).toFixed(2)} today
       </div>
     </div>
   );
@@ -54,8 +137,9 @@ function IndexCard({ quote }) {
 function MoverRow({ item, showVolume }) {
   const up = item.changesPercentage >= 0;
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
-      <div className="min-w-0 flex-1 mr-3">
+    <div className="flex items-center gap-2.5 py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+      <TickerLogo ticker={item.ticker} size={28} />
+      <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{item.ticker}</div>
         <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{item.name}</div>
       </div>
@@ -106,12 +190,7 @@ function NewsCard({ items }) {
         <ul className="divide-y divide-gray-100 dark:divide-gray-800">
           {items.slice(0, 15).map((item, i) => (
             <li key={i} className="py-2.5">
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block group"
-              >
+              <a href={item.url} target="_blank" rel="noopener noreferrer" className="block group">
                 <div className="text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 font-medium leading-snug">
                   {item.title}
                 </div>
@@ -132,6 +211,8 @@ function NewsCard({ items }) {
 function SkeletonBlock({ className }) {
   return <div className={`animate-pulse bg-gray-200 dark:bg-gray-800 rounded ${className}`} />;
 }
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const [data, setData] = useState(null);
@@ -154,9 +235,7 @@ export default function Home() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const lastUpdated = data?.fetched_at
     ? new Date(data.fetched_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -168,9 +247,7 @@ export default function Home() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Market Overview</h1>
-          {lastUpdated && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Last updated {lastUpdated}</p>
-          )}
+          {lastUpdated && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Last updated {lastUpdated}</p>}
         </div>
         <button
           onClick={() => fetchData(true)}
@@ -182,7 +259,6 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Warning banner if no API key */}
       {data?.warning && (
         <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3">
           <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
@@ -190,7 +266,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Error state */}
       {error && (
         <div className="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">
           <AlertCircle size={16} className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
@@ -201,7 +276,7 @@ export default function Home() {
       {/* Indices row */}
       {loading ? (
         <div className="flex gap-3">
-          {[0, 1, 2, 3].map((i) => <SkeletonBlock key={i} className="flex-1 h-20" />)}
+          {[0, 1, 2, 3].map((i) => <SkeletonBlock key={i} className="flex-1 h-28" />)}
         </div>
       ) : data?.indices?.length > 0 ? (
         <div className="flex gap-3 flex-wrap">
@@ -216,36 +291,14 @@ export default function Home() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <MoverCard
-            title="Top Gainers"
-            icon={TrendingUp}
-            items={data?.gainers ?? []}
-            showVolume={false}
-            color="text-green-500"
-          />
-          <MoverCard
-            title="Top Losers"
-            icon={TrendingDown}
-            items={data?.losers ?? []}
-            showVolume={false}
-            color="text-red-500"
-          />
-          <MoverCard
-            title="Most Active"
-            icon={Activity}
-            items={data?.actives ?? []}
-            showVolume={true}
-            color="text-blue-500"
-          />
+          <MoverCard title="Top Gainers" icon={TrendingUp} items={data?.gainers ?? []} showVolume={false} color="text-green-500" />
+          <MoverCard title="Top Losers" icon={TrendingDown} items={data?.losers ?? []} showVolume={false} color="text-red-500" />
+          <MoverCard title="Most Active" icon={Activity} items={data?.actives ?? []} showVolume={true} color="text-blue-500" />
         </div>
       )}
 
       {/* News */}
-      {loading ? (
-        <SkeletonBlock className="h-80" />
-      ) : (
-        <NewsCard items={data?.news ?? []} />
-      )}
+      {loading ? <SkeletonBlock className="h-80" /> : <NewsCard items={data?.news ?? []} />}
     </div>
   );
 }

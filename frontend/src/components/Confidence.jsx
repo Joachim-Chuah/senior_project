@@ -15,8 +15,8 @@ import {
     Zap,
 } from 'lucide-react';
 import api from '../utils/api';
-import { validateTicker } from '../utils/helpers';
 import { getErrorMessage } from '../utils/errorHandler';
+import TickerSearch from './TickerSearch';
 
 const HORIZONS = [
     { label: '1d',  value: 1 },
@@ -449,13 +449,11 @@ const ResultPanel = ({ result }) => {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const Confidence = () => {
-    const [searchInput, setSearchInput] = useState('');
     const [ticker, setTicker] = useState('');
     const [horizon, setHorizon] = useState(1);
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [validationError, setValidationError] = useState(null);
 
     // SPY example state
     const [spyResult, setSpyResult] = useState(null);
@@ -483,14 +481,10 @@ const Confidence = () => {
         }
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setValidationError(null);
-        const v = validateTicker(searchInput);
-        if (!v.isValid) { setValidationError(v.error); return; }
-        setTicker(v.ticker);
+    const handleSelect = (t) => {
+        setTicker(t);
         setResult(null);
-        runAnalysis(v.ticker, horizon);
+        runAnalysis(t, horizon);
     };
 
     const handleHorizonChange = (h) => {
@@ -513,42 +507,25 @@ const Confidence = () => {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex flex-col items-end gap-2">
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                        <input
-                            type="text"
-                            value={searchInput}
-                            onChange={(e) => { setSearchInput(e.target.value.toUpperCase()); setValidationError(null); }}
-                            placeholder="Search Stocks & ETFs"
-                            className={`bg-white dark:bg-gray-800 border border-dashed ${validationError ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white rounded-lg px-3 py-2 w-52 focus:outline-none focus:ring-2 focus:ring-gray-400/20 uppercase font-mono text-sm theme-transition`}
-                        />
-                        <div className="flex items-center bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-                            {HORIZONS.map((h) => (
-                                <button
-                                    key={h.value}
-                                    type="button"
-                                    onClick={() => handleHorizonChange(h.value)}
-                                    className={`px-3 py-2 text-sm font-medium transition-colors ${
-                                        horizon === h.value
-                                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                    }`}
-                                >
-                                    {h.label}
-                                </button>
-                            ))}
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? <Loader2 size={13} className="animate-spin" /> : <BrainCircuit size={13} />}
-                            Analyze
-                        </button>
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <TickerSearch onSelect={handleSelect} disabled={loading} />
+                    <div className="flex items-center bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+                        {HORIZONS.map((h) => (
+                            <button
+                                key={h.value}
+                                type="button"
+                                onClick={() => handleHorizonChange(h.value)}
+                                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                                    horizon === h.value
+                                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                }`}
+                            >
+                                {h.label}
+                            </button>
+                        ))}
                     </div>
-                    {validationError && <p className="text-red-500 text-xs">{validationError}</p>}
-                </form>
+                </div>
             </header>
 
             {/* Error banner */}
