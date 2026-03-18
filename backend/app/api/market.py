@@ -7,6 +7,7 @@ GET /api/market/summary
 from fastapi import APIRouter
 from datetime import datetime, timezone
 import logging
+import time
 
 from app.models.market import MarketOverview, MarketQuote, MarketMover, NewsItem
 from app.services.fmp_service import FMPService
@@ -19,6 +20,9 @@ settings = get_settings()
 _fmp = FMPService(api_key=settings.FMP_API_KEY)
 
 INDEX_SYMBOLS = ["SPY", "AAPL", "MSFT", "NVDA"]
+
+CACHE_TTL = 900  # 15 minutes
+_overview_cache: dict = {"data": None, "expires_at": 0.0}
 
 
 def _parse_mover(raw: dict) -> MarketMover:
@@ -60,8 +64,12 @@ async def get_market_overview() -> MarketOverview:
     """
     Returns a market overview: major indices, top gainers, losers,
     most active stocks, and latest news. Returns empty lists with a
-    warning if FMP_API_KEY is not configured.
+    warning if FMP_API_KEY is not configured. Cached for 15 minutes.
     """
+    # Serve from cache if still fresh
+    if _overview_cache["data"] is not None and time.time() < _overview_cache["expires_at"]:
+        return _overview_cache["data"]
+
     fetched_at = datetime.now(timezone.utc).isoformat()
 
     if not settings.FMP_API_KEY:
@@ -106,7 +114,7 @@ async def get_market_overview() -> MarketOverview:
         logger.warning(f"Failed to fetch news: {e}")
         news = []
 
-    return MarketOverview(
+    result = MarketOverview(
         indices=indices,
         gainers=gainers,
         losers=losers,
@@ -114,6 +122,9 @@ async def get_market_overview() -> MarketOverview:
         news=news,
         fetched_at=fetched_at,
     )
+    _overview_cache["data"] = result
+    _overview_cache["expires_at"] = time.time() + CACHE_TTL
+    return result
 
 
 @router.get("/summary")

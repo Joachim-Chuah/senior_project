@@ -110,10 +110,19 @@ function timeAgo(dateStr) {
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
+function stockLink(ticker) {
+  return `https://www.stocktaper.com/stock/${ticker}`;
+}
+
 function IndexCard({ quote }) {
   const up = quote.changesPercentage >= 0;
   return (
-    <div className="flex-1 min-w-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+    <a
+      href={stockLink(quote.symbol)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex-1 min-w-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-sm transition-all block"
+    >
       <div className="flex items-center gap-3 mb-3">
         <TickerLogo ticker={quote.symbol} size={38} />
         <div className="min-w-0 flex-1">
@@ -130,14 +139,19 @@ function IndexCard({ quote }) {
       <div className={`text-xs mt-0.5 ${up ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
         {up ? '+' : ''}{parseFloat(quote.change).toFixed(2)} today
       </div>
-    </div>
+    </a>
   );
 }
 
 function MoverRow({ item, showVolume }) {
   const up = item.changesPercentage >= 0;
   return (
-    <div className="flex items-center gap-2.5 py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+    <a
+      href={stockLink(item.ticker)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2.5 py-2 border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded px-1 -mx-1 transition-colors"
+    >
       <TickerLogo ticker={item.ticker} size={28} />
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{item.ticker}</div>
@@ -153,7 +167,7 @@ function MoverRow({ item, showVolume }) {
         )}
         <div className="text-xs text-gray-500 dark:text-gray-400">{formatPrice(item.price)}</div>
       </div>
-    </div>
+    </a>
   );
 }
 
