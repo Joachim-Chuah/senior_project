@@ -5,9 +5,12 @@ GET /api/market/summary
 """
 
 from fastapi import APIRouter
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import logging
 import time
+import json
+from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from app.models.market import MarketOverview, MarketQuote, MarketMover, NewsItem
 from app.services.fmp_service import FMPService
@@ -23,6 +26,54 @@ INDEX_SYMBOLS = ["SPY", "AAPL", "MSFT", "NVDA"]
 
 CACHE_TTL = 900  # 15 minutes
 _overview_cache: dict = {"data": None, "expires_at": 0.0}
+
+ET = ZoneInfo("America/New_York")
+SUMMARY_CACHE_PATH = Path(__file__).parent.parent.parent / "summary_cache.json"
+
+
+def _last_trading_date(now_et: datetime) -> str:
+    """Most recent weekday (Mon–Fri) as YYYY-MM-DD."""
+    d = now_et.date()
+    while d.weekday() >= 5:  # 5=Sat, 6=Sun
+        d -= timedelta(days=1)
+    return d.isoformat()
+
+
+def _prev_trading_date(now_et: datetime) -> str:
+    """The trading day before the last trading date."""
+    d = now_et.date()
+    while d.weekday() >= 5:
+        d -= timedelta(days=1)
+    d -= timedelta(days=1)
+    while d.weekday() >= 5:
+        d -= timedelta(days=1)
+    return d.isoformat()
+
+
+def _market_closed_for_day(now_et: datetime) -> bool:
+    """True if market has finished trading (weekday after 4 PM ET, or weekend)."""
+    if now_et.weekday() >= 5:
+        return True
+    return now_et.hour >= 16
+
+
+def _load_summary_cache() -> dict:
+    if SUMMARY_CACHE_PATH.exists():
+        try:
+            return json.loads(SUMMARY_CACHE_PATH.read_text())
+        except Exception:
+            pass
+    return {}
+
+
+def _save_summary_cache(cache: dict):
+    # Keep only the last 2 trading days to avoid bloat
+    sorted_keys = sorted(cache.keys(), reverse=True)[:2]
+    trimmed = {k: cache[k] for k in sorted_keys}
+    try:
+        SUMMARY_CACHE_PATH.write_text(json.dumps(trimmed, indent=2))
+    except Exception as e:
+        logger.warning(f"Failed to save summary cache: {e}")
 
 
 def _parse_mover(raw: dict) -> MarketMover:
@@ -130,25 +181,56 @@ async def get_market_overview() -> MarketOverview:
 @router.get("/summary")
 async def get_market_summary():
     """
-    Generate an AI end-of-day market summary using Groq.
-    Based purely on price data — no social sentiment involved.
+    Return an AI end-of-day market summary using Groq.
+    Generated once per trading day after 4 PM ET, then cached to disk.
+    If the market hasn't closed yet, returns the previous day's summary instead.
     """
     import asyncio
 
+    now_et = datetime.now(ET)
+    closed = _market_closed_for_day(now_et)
+    trading_date = _last_trading_date(now_et)
+    prev_date = _prev_trading_date(now_et)
+
+    cache = _load_summary_cache()
+    prev_entry = cache.get(prev_date)
+    prev_summary = prev_entry.get("summary") if prev_entry else None
+    prev_generated_at = prev_entry.get("generated_at") if prev_entry else None
+
+    def _base_response(**kwargs):
+        return {
+            "market_closed": closed,
+            "trading_date": trading_date,
+            "prev_summary": prev_summary,
+            "prev_date": prev_date,
+            "prev_generated_at": prev_generated_at,
+            **kwargs,
+        }
+
+    # Market still open — return prev summary, no generation
+    if not closed:
+        return _base_response(summary=None, generated_at=None)
+
+    # Market closed — serve from cache if available
+    if trading_date in cache:
+        entry = cache[trading_date]
+        return _base_response(summary=entry["summary"], generated_at=entry["generated_at"])
+
+    # Market closed, no cache — generate now
     generated_at = datetime.now(timezone.utc).isoformat()
 
     if not settings.GROQ_API_KEY:
-        return {"summary": "AI summary unavailable — GROQ_API_KEY not configured.", "generated_at": generated_at}
+        return _base_response(
+            summary="AI summary unavailable — GROQ_API_KEY not configured.",
+            generated_at=generated_at,
+        )
 
-    # Fetch market data concurrently
     loop = asyncio.get_event_loop()
 
     def fetch_all():
         quotes = _fmp.get_quotes(INDEX_SYMBOLS)
         gainers = _fmp.get_gainers()[:5]
         losers = _fmp.get_losers()[:5]
-
-        # VIX via yfinance
         vix_level = None
         try:
             import yfinance as yf
@@ -157,14 +239,11 @@ async def get_market_summary():
                 vix_level = round(float(vix_hist["Close"].iloc[-1]), 2)
         except Exception:
             pass
-
         return quotes, gainers, losers, vix_level
 
     quotes, gainers, losers, vix_level = await loop.run_in_executor(None, fetch_all)
 
-    # Build compact data context
     lines = ["=== MARKET DATA ==="]
-
     if quotes:
         lines.append("\nIndex / Key Tickers:")
         for q in quotes:
@@ -172,16 +251,13 @@ async def get_market_summary():
             chg = q.get("change", 0)
             sign = "+" if float(pct) >= 0 else ""
             lines.append(f"  {q.get('symbol')}: ${q.get('price', 0):.2f}  {sign}{float(pct):.2f}%  ({sign}{float(chg):.2f})")
-
     if vix_level is not None:
         regime = "low (calm)" if vix_level < 15 else "elevated (cautious)" if vix_level < 25 else "high (fearful)"
         lines.append(f"\nVIX: {vix_level} — {regime}")
-
     if gainers:
         lines.append("\nTop Gainers:")
         for g in gainers:
             lines.append(f"  {g.get('symbol')} ({g.get('name', '')[:25]}): +{g.get('changesPercentage', 0):.1f}%")
-
     if losers:
         lines.append("\nTop Losers:")
         for l in losers:
@@ -189,11 +265,9 @@ async def get_market_summary():
 
     data_context = "\n".join(lines)
 
-    # Call Groq
     try:
         from groq import Groq
         client = Groq(api_key=settings.GROQ_API_KEY)
-
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
@@ -224,4 +298,8 @@ async def get_market_summary():
         logger.error(f"Groq summary generation failed: {e}")
         summary = "Unable to generate summary at this time."
 
-    return {"summary": summary, "generated_at": generated_at}
+    # Persist to disk
+    cache[trading_date] = {"summary": summary, "generated_at": generated_at}
+    _save_summary_cache(cache)
+
+    return _base_response(summary=summary, generated_at=generated_at)

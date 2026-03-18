@@ -227,7 +227,7 @@ function SkeletonBlock({ className }) {
 }
 
 function EndOfDayOverview() {
-  const [summary, setSummary] = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -236,9 +236,9 @@ function EndOfDayOverview() {
     else setLoading(true);
     try {
       const res = await api.get('/market/summary');
-      setSummary(res.data);
+      setData(res.data);
     } catch {
-      setSummary(null);
+      setData(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -247,8 +247,16 @@ function EndOfDayOverview() {
 
   useEffect(() => { fetchSummary(); }, [fetchSummary]);
 
-  const generatedAt = summary?.generated_at
-    ? new Date(summary.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const generatedAt = data?.generated_at
+    ? new Date(data.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
+
+  const prevGeneratedAt = data?.prev_generated_at
+    ? new Date(data.prev_generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
+
+  const prevDateLabel = data?.prev_date
+    ? new Date(data.prev_date + 'T12:00:00').toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })
     : null;
 
   return (
@@ -261,6 +269,7 @@ function EndOfDayOverview() {
         </p>
       </div>
 
+      {/* Today's summary card */}
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -289,12 +298,31 @@ function EndOfDayOverview() {
             <SkeletonBlock className="h-4 w-5/6" />
             <SkeletonBlock className="h-4 w-4/6" />
           </div>
-        ) : summary?.summary ? (
-          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-center">{summary.summary}</p>
+        ) : data?.market_closed === false ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+            Today's overview will be available after market close at <span className="font-medium text-gray-700 dark:text-gray-300">4:00 PM ET</span>.
+          </p>
+        ) : data?.summary ? (
+          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-center">{data.summary}</p>
         ) : (
           <p className="text-sm text-gray-400 dark:text-gray-600 text-center">Summary unavailable.</p>
         )}
       </div>
+
+      {/* Previous day's summary — shown when market is open or as context */}
+      {!loading && data?.prev_summary && (
+        <div className="mt-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              {data.market_closed === false ? 'Here\'s what happened' : 'Previous day'} · {prevDateLabel}
+            </span>
+            {prevGeneratedAt && (
+              <span className="text-xs text-gray-400 dark:text-gray-500">· Generated {prevGeneratedAt}</span>
+            )}
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed text-center">{data.prev_summary}</p>
+        </div>
+      )}
     </div>
   );
 }
