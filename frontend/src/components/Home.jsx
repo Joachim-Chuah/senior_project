@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, TrendingUp, TrendingDown, Activity, Newspaper, AlertCircle } from 'lucide-react';
+import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, Sparkles } from 'lucide-react';
 import api from '../utils/api';
 
 // ─── Logo helpers ─────────────────────────────────────────────────────────────
@@ -212,6 +212,79 @@ function SkeletonBlock({ className }) {
   return <div className={`animate-pulse bg-gray-200 dark:bg-gray-800 rounded ${className}`} />;
 }
 
+function EndOfDayOverview() {
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchSummary = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    try {
+      const res = await api.get('/market/summary');
+      setSummary(res.data);
+    } catch {
+      setSummary(null);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchSummary(); }, [fetchSummary]);
+
+  const generatedAt = summary?.generated_at
+    ? new Date(summary.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
+
+  return (
+    <div className="max-w-3xl mx-auto w-full">
+      {/* Intro blurb */}
+      <div className="text-center mb-5">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">End of Day Overview</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          A daily AI-generated summary of how markets closed — what moved, what drove it, and what the numbers suggest.
+        </p>
+      </div>
+
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Sparkles size={14} className="text-indigo-500 dark:text-indigo-400" />
+            <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 font-medium">
+              Groq AI
+            </span>
+            {generatedAt && (
+              <span className="text-xs text-gray-400 dark:text-gray-500">· Generated {generatedAt}</span>
+            )}
+          </div>
+          <button
+            onClick={() => fetchSummary(true)}
+            disabled={loading || refreshing}
+            className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="space-y-2.5">
+            <SkeletonBlock className="h-4 w-full" />
+            <SkeletonBlock className="h-4 w-11/12" />
+            <SkeletonBlock className="h-4 w-5/6" />
+            <SkeletonBlock className="h-4 w-4/6" />
+          </div>
+        ) : summary?.summary ? (
+          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-center">{summary.summary}</p>
+        ) : (
+          <p className="text-sm text-gray-400 dark:text-gray-600 text-center">Summary unavailable.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -284,21 +357,20 @@ export default function Home() {
         </div>
       ) : null}
 
-      {/* Movers grid */}
+      {/* Movers grid — Gainers + Losers only */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[0, 1, 2].map((i) => <SkeletonBlock key={i} className="h-64" />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[0, 1].map((i) => <SkeletonBlock key={i} className="h-64" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MoverCard title="Top Gainers" icon={TrendingUp} items={data?.gainers ?? []} showVolume={false} color="text-green-500" />
           <MoverCard title="Top Losers" icon={TrendingDown} items={data?.losers ?? []} showVolume={false} color="text-red-500" />
-          <MoverCard title="Most Active" icon={Activity} items={data?.actives ?? []} showVolume={true} color="text-blue-500" />
         </div>
       )}
 
-      {/* News */}
-      {loading ? <SkeletonBlock className="h-80" /> : <NewsCard items={data?.news ?? []} />}
+      {/* End of Day Overview */}
+      <EndOfDayOverview />
     </div>
   );
 }
