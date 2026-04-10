@@ -1,30 +1,36 @@
 # Sentiviz
 
-**Real-Time Options & Sentiment Analysis Dashboard**
+**Sentiviz** is a trading dashboard that helps you gauge market sentiment so you can make more informed decisions while trading. It combines social sentiment, live market data, options analysis, and AI-powered insights into a single unified view.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![Node](https://img.shields.io/badge/node-18+-green.svg)
+
+---
 
 ## Features
 
+### Market Overview
+- Live indices (SPY, QQQ, DIA, VIX) with daily price and change
+- Top gainers and losers with clickable links to StockAnalysis
+- End-of-day AI summary with market reasoning, generated once after market close and cached daily
+
+### Sentiment Dashboard
+- Real-time social sentiment from StockTwits for any ticker
+- Bullish / bearish / neutral signal with score and post breakdown
+- Confidence scoring engine that weighs sentiment, price momentum, and volatility to rate signal strength
+
 ### Options Analysis
-- **Options Chain Analysis** - Fetch options data with Greeks (Delta, Gamma, Theta, Vega)
-- **Black-Scholes Pricing** - Accurate option pricing and implied volatility calculations
-- **Scenario Analysis** - Model potential outcomes with sentiment-adjusted pricing
-- **Historical Volatility** - Track volatility trends over time
+- Full options chain via Yahoo Finance with live Greeks (Delta, Gamma, Theta, Vega)
+- Black-Scholes implied volatility calculations
+- Historical volatility tracking
 
-### Sentiment Analysis
-- **Reddit Sentiment** - Real-time analysis of r/wallstreetbets and other trading subreddits using VADER
-- **GDELT News Sentiment** - Global news sentiment from the GDELT Project
-- **Fusion Index** - Combined sentiment score using exponential moving averages
-- **Spike Detection** - Identify unusual sentiment surges using Z-score analysis
+### AI Analyst
+- Chat directly with an AI analyst powered by Groq LLM
+- Ask about any ticker, market conditions, or strategy
+- Tavily-powered web search for up-to-date context
 
-### Key Capabilities
-- Multi-source sentiment fusion with configurable weights
-- Sentiment regime detection (bullish/bearish/neutral)
-- Real-time data updates via REST API
-- Interactive dashboard with responsive design
+---
 
 ## Architecture
 
@@ -36,21 +42,21 @@ sentiviz/
 │   │   ├── services/ # Business logic
 │   │   ├── models/   # Data models
 │   │   └── utils/    # Configuration
-│   └── tests/        # Backend tests
+│   └── tests/        # Unit tests
 ├── frontend/         # React + Vite frontend
 │   └── src/
 │       ├── components/  # React components
 │       └── App.jsx      # Main application
-└── docs/            # Documentation
 ```
+
+---
 
 ## Quick Start
 
 ### Prerequisites
-- **Python 3.8+** - Backend API
-- **Node.js 18+** - Frontend application
-- **Redis** (optional) - For caching
-- **Reddit API credentials** - For sentiment analysis
+- Python 3.11+
+- Node.js 18+
+- API keys: Groq, Financial Modeling Prep (FMP), Tavily (optional)
 
 ### 1. Clone the Repository
 
@@ -63,132 +69,71 @@ cd senior_project/sentiviz
 
 ```bash
 cd backend
-
-# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Configure environment
 cp .env.example .env
-# Edit .env with your Reddit API credentials
-
-# Start the server
+# Add your API keys to .env
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-The API will be available at `http://localhost:8000`  
-API documentation: `http://localhost:8000/docs`
+API available at `http://localhost:8000` · Docs at `http://localhost:8000/docs`
 
 ### 3. Frontend Setup
 
-Open a **new terminal**:
-
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-The UI will be available at `http://localhost:5173`
-
-## API Endpoints
-
-### Options
-- `GET /api/options/chain/{ticker}` - Fetch option chain with Greeks
-- `GET /api/options/volatility/{ticker}` - Historical volatility data
-- `POST /api/options/scenario` - Run scenario analysis
-
-### Sentiment
-- `GET /api/sentiment/reddit/{ticker}` - Reddit sentiment analysis
-- `GET /api/sentiment/gdelt/{ticker}` - GDELT news sentiment
-- `GET /api/sentiment/summary/{ticker}` - Aggregated sentiment summary
-
-### Fusion
-- `GET /api/fusion/timeseries/{ticker}` - Sentiment time series
-- `GET /api/fusion/regime/{ticker}` - Current sentiment regime
-- `GET /api/fusion/spikes/{ticker}` - Detect sentiment spikes
-- `POST /api/fusion/update/{ticker}` - Update sentiment data
-
-## Testing
-
-### Backend Tests
-```bash
-cd backend
-source venv/bin/activate
-pytest                          # Run all tests
-pytest --cov=app tests/        # With coverage
-pytest -v                      # Verbose output
-```
-
-### Frontend Build
-```bash
-cd frontend
-npm run build                  # Verify production build
-```
-
-## Tech Stack
-
-### Backend
-- **FastAPI** - Modern async web framework
-- **Pydantic v2** - Data validation and settings management
-- **yfinance** - Real-time options chain data
-- **PRAW** - Reddit API wrapper
-- **VADER** - Sentiment analysis
-- **GDELT** - Global news database
-- **NumPy/SciPy** - Black-Scholes calculations
-- **Pandas** - Data processing
-
-### Frontend
-- **React** - UI framework
-- **Vite** - Build tool and dev server
-- **Tailwind CSS** - Utility-first styling
-- **Axios** - HTTP client
-
-## How It Works
-
-1. **Data Collection**: Sentiviz fetches real-time options data from Yahoo Finance and sentiment data from Reddit and GDELT
-2. **Sentiment Analysis**: VADER analyzes text sentiment, producing scores from -1 (bearish) to +1 (bullish)
-3. **Fusion Algorithm**: Multiple sentiment sources are combined using weighted exponential moving averages
-4. **Spike Detection**: Z-score analysis identifies unusual sentiment surges
-5. **Scenario Modeling**: Black-Scholes pricing is adjusted based on sentiment to model potential outcomes
-
-## Getting Reddit API Credentials
-
-1. Go to https://www.reddit.com/prefs/apps
-2. Click "Create App" or "Create Another App"
-3. Select "script" as the app type
-4. Fill in the required fields
-5. Copy your `client_id` and `client_secret` to `.env`
-
-## Configuration
-
-Edit `backend/.env` to configure:
-- Reddit API credentials
-- GDELT API settings
-- Sentiment fusion weights
-- Cache settings
-- API rate limits
-
-See `backend/.env.example` for all available options.
-
-## License
-
-This project is licensed under the MIT License.
-
-## Acknowledgments
-
-- **GDELT Project** - Global news sentiment data
-- **Reddit API** - Social media sentiment
-- **Yahoo Finance** - Options chain data
-- **VADER** - Sentiment analysis algorithm
+UI available at `http://localhost:5173`
 
 ---
 
-**Built for traders and investors**
+## API Endpoints
+
+### Market
+- `GET /api/market/overview` — Indices, gainers, losers
+- `GET /api/market/summary` — AI end-of-day market summary
+
+### Sentiment
+- `GET /api/sentiment/{ticker}` — StockTwits sentiment signal
+
+### Options
+- `GET /api/options/chain/{ticker}` — Options chain with Greeks
+- `GET /api/options/volatility/{ticker}` — Historical volatility
+
+### AI
+- `POST /api/ai/chat` — Chat with AI analyst
+- `POST /api/ai/analyze` — AI analysis for a ticker
+
+---
+
+## Tech Stack
+
+**Backend:** FastAPI · Pydantic v2 · yfinance · Groq LLM · Tavily · Financial Modeling Prep · feedparser · NumPy
+
+**Frontend:** React 19 · Vite · Tailwind CSS · Axios · Lucide React
+
+---
+
+## Testing
+
+```bash
+cd backend
+source venv/bin/activate
+pytest -v
+```
+
+Unit tests covering sentiment scoring, options calculations, market helpers, confidence engine, and RSS parsing.
+
+---
+
+## License
+
+MIT
+
+---
+
+*Built as a senior project.*
