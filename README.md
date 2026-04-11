@@ -164,7 +164,28 @@ source venv/bin/activate
 pytest -v
 ```
 
-Unit tests covering sentiment scoring, options calculations, market helpers, confidence engine, and RSS parsing.
+Unit tests cover:
+
+| File | What it tests |
+|------|---------------|
+| `test_black_scholes.py` | `_norm_cdf`, `_norm_pdf`, B-S pricing, Greeks, put-call parity, expiry edge cases |
+| `test_mock_fmp_service.py` | MockFMPService — all methods, drift behaviour, search filtering, unknown tickers |
+| `test_fmp_service.py` | FMPService — empty API key guards, quote fetching, symbol search, movers |
+| `test_confidence_service.py` | Confidence engine — sigmoid, feature vector, rule predictor, top drivers, persistence |
+| `test_market_helpers.py` | Trading date logic, market hours, summary cache read/write |
+| `test_stocktwits_service.py` | Sentiment parsing, scoring, bull/bear signal thresholds |
+| `test_rss_service.py` | RSS feed parsing, date handling, summary truncation |
+| `test_api.py` | API endpoints — root, health, demo options chain |
+
+Run a single file:
+```bash
+pytest tests/test_black_scholes.py -v
+```
+
+Run a single test:
+```bash
+pytest tests/test_black_scholes.py::TestBlackScholes::test_put_call_parity -v
+```
 
 ---
 

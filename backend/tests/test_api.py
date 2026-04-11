@@ -13,8 +13,15 @@ class TestAPIEndpoints:
     """Test API endpoints"""
 
     def test_root_endpoint(self):
-        """Test root endpoint"""
+        """Test legacy root endpoint"""
         response = client.get("/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "online"
+
+    def test_api_root_endpoint(self):
+        """Test /api/ root endpoint"""
+        response = client.get("/api/")
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "online"
@@ -28,34 +35,20 @@ class TestAPIEndpoints:
         assert data["status"] == "healthy"
         assert "services" in data
 
-    def test_scenario_analysis_endpoint(self):
-        """Test scenario analysis endpoint"""
-        from datetime import datetime, timedelta
-
-        # Use a date 30 days in the future
-        future_date = datetime.now() + timedelta(days=30)
-        expiration = future_date.strftime("%Y-%m-%d")
-
-        payload = {
-            "ticker": "AAPL",
-            "strike": 150,
-            "expiration": expiration,
-            "option_type": "call",
-            "spot_price": 150,
-            "volatility": 0.3,
-            "price_change": 5,
-            "volatility_change": 0.05,
-            "time_change": -1
-        }
-
-        response = client.post("/api/options/scenario", params=payload)
+    def test_demo_options_endpoint(self):
+        """Test demo options chain endpoint"""
+        response = client.get("/api/demo/options/AAPL?days=14")
         assert response.status_code == 200
         data = response.json()
+        assert data["ticker"] == "AAPL"
+        assert "spot" in data
+        assert "chain" in data
+        assert len(data["chain"]) == 17  # 8 below ATM + ATM + 8 above
 
-        assert "base_price" in data
-        assert "adjusted_price" in data
-        assert "base_greeks" in data
-        assert "adjusted_greeks" in data
+    def test_demo_options_invalid_ticker(self):
+        """Test demo options endpoint rejects non-Mag7 tickers"""
+        response = client.get("/api/demo/options/XYZ")
+        assert response.status_code == 404
 
     def test_invalid_ticker(self):
         """Test with invalid ticker"""
