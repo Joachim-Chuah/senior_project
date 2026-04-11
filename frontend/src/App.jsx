@@ -5,10 +5,24 @@ import Dashboard from './components/Dashboard';
 import Confidence from './components/Confidence';
 import AIAnalysis from './components/AIAnalysis';
 import Landing from './components/Landing';
+import MockOptionsChain from './components/MockOptionsChain';
+import BlackScholesGuide from './components/BlackScholesGuide';
+
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
 function App() {
   const [launched, setLaunched] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
+  const [crossTabTicker, setCrossTabTicker] = useState(null);
+
+  function navigateTo(tabId, ticker = null) {
+    setActiveTab(tabId);
+    setCrossTabTicker(ticker);
+  }
+
+  function clearCrossTabTicker() {
+    setCrossTabTicker(null);
+  }
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem('darkMode');
     if (stored !== null) return stored === 'true';
@@ -31,11 +45,13 @@ function App() {
       case 'home':
         return <Home />;
       case 'dashboard':
-        return <Dashboard />;
+        return DEMO_MODE ? <MockOptionsChain /> : <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
       case 'confidence':
-        return <Confidence />;
+        return DEMO_MODE ? <BlackScholesGuide /> : <Confidence navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
+      case 'sentiment':
+        return <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
       case 'ai':
-        return <AIAnalysis />;
+        return <AIAnalysis navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
       default:
         return <Home />;
     }

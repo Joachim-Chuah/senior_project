@@ -40,39 +40,3 @@ def validate_ticker(ticker: str) -> str:
         )
 
     return normalized
-
-
-def validate_sentiment_score(score: float, name: str = "Sentiment score") -> None:
-    """
-    Validate sentiment score is in valid range
-
-    Args:
-        score: Sentiment score to validate
-        name: Name of the score for error messages
-
-    Raises:
-        HTTPException: If score is out of range
-    """
-    if not -1.0 <= score <= 1.0:
-        raise HTTPException(
-            status_code=400,
-            detail=f"{name} must be between -1.0 and 1.0"
-        )
-
-
-def validate_positive_number(value: float, name: str) -> None:
-    """
-    Validate that a number is positive
-
-    Args:
-        value: Number to validate
-        name: Name of the value for error messages
-
-    Raises:
-        HTTPException: If value is not positive
-    """
-    if value <= 0:
-        raise HTTPException(
-            status_code=400,
-            detail=f"{name} must be a positive number"
-        )

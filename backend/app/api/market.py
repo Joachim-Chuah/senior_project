@@ -14,13 +14,14 @@ from zoneinfo import ZoneInfo
 
 from app.models.market import MarketOverview, MarketQuote, MarketMover, NewsItem
 from app.services.fmp_service import FMPService
+from app.services.mock_fmp_service import MockFMPService
 from app.utils.config import get_settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 settings = get_settings()
-_fmp = FMPService(api_key=settings.FMP_API_KEY)
+_fmp = MockFMPService() if settings.DEMO_MODE else FMPService(api_key=settings.FMP_API_KEY)
 
 INDEX_SYMBOLS = ["SPY", "AAPL", "MSFT", "NVDA"]
 

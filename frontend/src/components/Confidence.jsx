@@ -13,7 +13,11 @@ import {
     Layers,
     Sigma,
     Zap,
+    LayoutDashboard,
+    Sparkles,
 } from 'lucide-react';
+
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 import api from '../utils/api';
 import { getErrorMessage } from '../utils/errorHandler';
 import TickerSearch from './TickerSearch';
@@ -51,12 +55,12 @@ function sigmoid(x) {
 // ─── Shared sub-components ───────────────────────────────────────────────────
 
 const WarmingBanner = () => (
-    <div className="bg-amber-50 dark:bg-amber-500/10 border border-dashed border-amber-300 dark:border-amber-500/30 rounded-xl px-4 py-3 flex items-start gap-3">
-        <span className="text-amber-500 dark:text-amber-400 mt-0.5 text-base leading-none">⚙</span>
+    <div className="bg-gray-50 dark:bg-gray-800/50 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 flex items-start gap-3">
+        <span className="text-gray-400 dark:text-gray-500 mt-0.5 text-base leading-none">⚙</span>
         <div>
-            <p className="text-amber-700 dark:text-amber-300 font-semibold text-sm">Warming up — collecting data</p>
-            <p className="text-amber-600 dark:text-amber-400/80 text-xs mt-0.5">
-                Rule-based weights active. Model switches to fitted logistic regression after 30 observations.
+            <p className="text-gray-600 dark:text-gray-300 font-semibold text-sm">Rule-based mode</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">
+                Using domain-knowledge weights. Signal accuracy improves as more tickers are analyzed over time.
             </p>
         </div>
     </div>
@@ -369,7 +373,7 @@ const ConfidenceExplainer = ({ spyResult, spyLoading, spyError }) => {
 
 // ─── Result panel (after user searches a ticker) ──────────────────────────────
 
-const ResultPanel = ({ result }) => {
+const ResultPanel = ({ result, navigateTo }) => {
     const [featuresOpen, setFeaturesOpen] = useState(false);
     const isUp = result.direction === 'up';
 
@@ -401,8 +405,12 @@ const ResultPanel = ({ result }) => {
                     {result.expected_move_pct != null ? (
                         <>
                             <span className="text-3xl font-bold text-gray-900 dark:text-white">±{result.expected_move_pct.toFixed(2)}%</span>
+                            <div className="w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden flex mt-2">
+                                <div className="bg-red-400 h-full" style={{ width: '50%' }} />
+                                <div className="bg-emerald-400 h-full" style={{ width: '50%' }} />
+                            </div>
                             <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                {result.features.iv_atm ? 'from ATM IV' : 'from realized vol'}
+                                {result.features.iv_atm ? 'from ATM implied vol' : 'from realized vol'} · {result.horizon}d horizon
                             </p>
                         </>
                     ) : (
@@ -417,6 +425,26 @@ const ResultPanel = ({ result }) => {
                     <div className="divide-y divide-dashed divide-gray-100 dark:divide-gray-800">
                         {result.top_drivers.map((d, i) => <DriverRow key={i} driver={d} />)}
                     </div>
+                </div>
+            )}
+
+            {/* Cross-tab navigation */}
+            {navigateTo && (
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        onClick={() => navigateTo(DEMO_MODE ? 'sentiment' : 'dashboard', result.ticker)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-dashed border-emerald-300 dark:border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+                    >
+                        <LayoutDashboard size={14} />
+                        See what traders are saying about {result.ticker}
+                    </button>
+                    <button
+                        onClick={() => navigateTo('ai', result.ticker)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                        <Sparkles size={14} />
+                        Ask AI about {result.ticker}
+                    </button>
                 </div>
             )}
 
@@ -448,7 +476,7 @@ const ResultPanel = ({ result }) => {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const Confidence = () => {
+const Confidence = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
     const [ticker, setTicker] = useState('');
     const [horizon, setHorizon] = useState(1);
     const [result, setResult] = useState(null);
@@ -486,6 +514,14 @@ const Confidence = () => {
         setResult(null);
         runAnalysis(t, horizon);
     };
+
+    // Consume cross-tab ticker
+    useEffect(() => {
+        if (crossTabTicker) {
+            handleSelect(crossTabTicker);
+            clearCrossTabTicker();
+        }
+    }, [crossTabTicker]);
 
     const handleHorizonChange = (h) => {
         setHorizon(h);
@@ -549,7 +585,7 @@ const Confidence = () => {
 
             {/* Result or explainer */}
             {result && !loading ? (
-                <ResultPanel result={result} />
+                <ResultPanel result={result} navigateTo={navigateTo} />
             ) : !loading ? (
                 <ConfidenceExplainer
                     spyResult={spyResult}

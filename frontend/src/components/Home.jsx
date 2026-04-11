@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, Sparkles } from 'lucide-react';
+import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, Sparkles, Newspaper } from 'lucide-react';
 import api from '../utils/api';
 
 // ─── Logo helpers ─────────────────────────────────────────────────────────────
@@ -15,7 +15,6 @@ const TICKER_DOMAINS = {
   GOOGL: 'google.com',
   GOOG: 'google.com',
   NFLX: 'netflix.com',
-  GOOG: 'google.com',
   AMD: 'amd.com',
   INTC: 'intel.com',
   JPM: 'jpmorganchase.com',

@@ -10,6 +10,7 @@ from app.models.confidence import ConfidenceRequest, ConfidenceResult
 from app.services.confidence_service import ConfidenceService
 from app.services.stocktwits_service import StockTwitsService
 from app.services.fmp_service import FMPService
+from app.services.mock_fmp_service import MockFMPService
 from app.utils.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ settings = get_settings()
 
 # Service singletons (module-level so state is preserved across requests)
 _stocktwits = StockTwitsService()
-_fmp = FMPService(api_key=settings.FMP_API_KEY)
+_fmp = MockFMPService() if settings.DEMO_MODE else FMPService(api_key=settings.FMP_API_KEY)
 _confidence = ConfidenceService(stocktwits=_stocktwits, fmp=_fmp)
 
 

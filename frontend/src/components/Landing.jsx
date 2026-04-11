@@ -1,7 +1,9 @@
 import React from 'react';
-import { LayoutDashboard, BrainCircuit, Sparkles, BarChart2, ArrowRight, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, BrainCircuit, Sparkles, BarChart2, ArrowRight, Sun, Moon, LineChart, BookOpen } from 'lucide-react';
 
-const features = [
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+
+const liveFeatures = [
     {
         icon: LayoutDashboard,
         title: 'Sentiment Dashboard',
@@ -18,6 +20,26 @@ const features = [
         description: 'Chat with a financial analyst LLM trained on market domain knowledge. Pulls live web search results to keep context current.',
     },
 ];
+
+const demoFeatures = [
+    {
+        icon: LineChart,
+        title: 'Options Chain',
+        description: 'Live Black-Scholes pricing across all strikes and expirations for the Magnificent 7. Real Greeks, realistic IV assumptions.',
+    },
+    {
+        icon: BookOpen,
+        title: 'Black-Scholes Guide',
+        description: 'Interactive walkthrough of the model that prices options. Adjust inputs, watch Greeks update live, compare against real market prices.',
+    },
+    {
+        icon: Sparkles,
+        title: 'AI Analysis',
+        description: 'Chat with a financial analyst LLM trained on market domain knowledge. Pulls live web search results to keep context current.',
+    },
+];
+
+const features = DEMO_MODE ? demoFeatures : liveFeatures;
 
 const Landing = ({ onLaunch, darkMode, toggleDarkMode }) => {
     return (
@@ -43,8 +65,8 @@ const Landing = ({ onLaunch, darkMode, toggleDarkMode }) => {
             {/* Hero */}
             <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-16">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-dashed border-gray-300 dark:border-gray-700 text-xs font-medium text-gray-500 dark:text-gray-400 mb-6">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Live market data
+                    <span className={`w-1.5 h-1.5 rounded-full ${DEMO_MODE ? 'bg-amber-400' : 'bg-emerald-500 animate-pulse'}`} />
+                    {DEMO_MODE ? 'Demo mode · Black-Scholes pricing' : 'Live market data'}
                 </div>
 
                 <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-gray-900 dark:text-white max-w-2xl leading-tight">

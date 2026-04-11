@@ -42,20 +42,3 @@ export const getErrorMessage = (error) => {
   return error.message || 'An unexpected error occurred';
 };
 
-/**
- * Check if error is a network error
- * @param {Error} error
- * @returns {boolean}
- */
-export const isNetworkError = (error) => {
-  return !error.response && error.request;
-};
-
-/**
- * Check if error is a timeout
- * @param {Error} error
- * @returns {boolean}
- */
-export const isTimeoutError = (error) => {
-  return error.code === 'ECONNABORTED' || error.message?.includes('timeout');
-};

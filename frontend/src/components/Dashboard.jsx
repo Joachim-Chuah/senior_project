@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { TrendingUp, TrendingDown, Minus, AlertCircle, MessageCircle, Users, RefreshCw, ArrowLeft, Newspaper } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, AlertCircle, MessageCircle, Users, RefreshCw, ArrowLeft, Newspaper, BrainCircuit, Sparkles } from 'lucide-react';
+
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 import api from '../utils/api';
 import { getErrorMessage } from '../utils/errorHandler';
 import TickerSearch from './TickerSearch';
@@ -207,7 +209,7 @@ const NewsFeed = () => {
 
 // ─── Overview view ────────────────────────────────────────────────────────────
 
-const OverviewPanel = ({ onSelectTicker }) => {
+const OverviewPanel = ({ onSelectTicker, navigateTo }) => {
     const [overview, setOverview] = useState([]);
     const [overviewLoading, setOverviewLoading] = useState(true);
     const [overviewError, setOverviewError] = useState(null);
@@ -255,6 +257,37 @@ const OverviewPanel = ({ onSelectTicker }) => {
                 </div>
             )}
 
+            {/* Aggregate sentiment bar */}
+            {!overviewLoading && overview.length > 0 && (() => {
+                const totalBull    = overview.reduce((s, i) => s + (i.bullish_count  || 0), 0);
+                const totalBear    = overview.reduce((s, i) => s + (i.bearish_count  || 0), 0);
+                const totalNeutral = overview.reduce((s, i) => s + (i.neutral_count  || 0), 0);
+                const total        = totalBull + totalBear + totalNeutral || 1;
+                const bullPct      = Math.round((totalBull    / total) * 100);
+                const bearPct      = Math.round((totalBear    / total) * 100);
+                const neutralPct   = 100 - bullPct - bearPct;
+                const mood         = bullPct > bearPct + 10 ? 'Bullish' : bearPct > bullPct + 10 ? 'Bearish' : 'Mixed';
+                const moodColor    = mood === 'Bullish' ? 'text-emerald-600 dark:text-emerald-400' : mood === 'Bearish' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400';
+                return (
+                    <div className="bg-white dark:bg-gray-900 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-gray-500 dark:text-gray-400">Overall Market Mood</span>
+                            <span className={`font-bold ${moodColor}`}>{mood}</span>
+                        </div>
+                        <div className="h-2 rounded-full overflow-hidden flex">
+                            <div className="bg-emerald-500 h-full transition-all" style={{ width: `${bullPct}%` }} />
+                            <div className="bg-gray-200 dark:bg-gray-700 h-full transition-all" style={{ width: `${neutralPct}%` }} />
+                            <div className="bg-red-500 h-full transition-all" style={{ width: `${bearPct}%` }} />
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-emerald-600 dark:text-emerald-400">{bullPct}% bullish</span>
+                            <span>{neutralPct}% neutral</span>
+                            <span className="text-red-600 dark:text-red-400">{bearPct}% bearish</span>
+                        </div>
+                    </div>
+                );
+            })()}
+
             {overviewLoading ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {Array.from({ length: 8 }).map((_, i) => (
@@ -276,7 +309,7 @@ const OverviewPanel = ({ onSelectTicker }) => {
 
 // ─── Detail view ─────────────────────────────────────────────────────────────
 
-const DetailPanel = ({ ticker, onBack }) => {
+const DetailPanel = ({ ticker, onBack, navigateTo }) => {
     const [signal, setSignal] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -377,6 +410,28 @@ const DetailPanel = ({ ticker, onBack }) => {
                         </div>
                     </div>
 
+                    {/* Cross-tab navigation */}
+                    {navigateTo && (
+                        <div className="flex flex-wrap gap-2">
+                            {!DEMO_MODE && (
+                                <button
+                                    onClick={() => navigateTo('confidence', ticker)}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-dashed border-indigo-300 dark:border-indigo-500/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+                                >
+                                    <BrainCircuit size={14} />
+                                    Run Confidence Analysis for {ticker}
+                                </button>
+                            )}
+                            <button
+                                onClick={() => navigateTo('ai', ticker)}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            >
+                                <Sparkles size={14} />
+                                Ask AI about {ticker}
+                            </button>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="bg-white dark:bg-gray-900 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 overflow-hidden theme-transition">
                             <div className="px-4 py-3 border-b border-dashed border-gray-200 dark:border-gray-700 flex items-center gap-2">
@@ -416,14 +471,21 @@ const DetailPanel = ({ ticker, onBack }) => {
 
 // ─── Root component ───────────────────────────────────────────────────────────
 
-const Dashboard = () => {
+const Dashboard = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
     const [ticker, setTicker] = useState(null);
 
+    useEffect(() => {
+        if (crossTabTicker) {
+            setTicker(crossTabTicker);
+            clearCrossTabTicker();
+        }
+    }, [crossTabTicker]);
+
     if (ticker) {
-        return <DetailPanel ticker={ticker} onBack={() => setTicker(null)} />;
+        return <DetailPanel ticker={ticker} onBack={() => setTicker(null)} navigateTo={navigateTo} />;
     }
 
-    return <OverviewPanel onSelectTicker={(t) => setTicker(t)} />;
+    return <OverviewPanel onSelectTicker={(t) => setTicker(t)} navigateTo={navigateTo} />;
 };
 
 export default Dashboard;

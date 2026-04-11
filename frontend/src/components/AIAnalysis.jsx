@@ -33,7 +33,7 @@ const SuggestedQuestion = ({ question, onClick }) => (
     </button>
 );
 
-const AIAnalysis = () => {
+const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
     const [ticker, setTicker] = useState('');
     const [searchInput, setSearchInput] = useState('');
     const [messages, setMessages] = useState([]);
@@ -43,12 +43,28 @@ const AIAnalysis = () => {
     const [validationError, setValidationError] = useState(null);
     const messagesEndRef = useRef(null);
 
-    const suggestedQuestions = [
-        `Why is ${ticker} sentiment bullish or bearish?`,
-        `What are traders saying about ${ticker}?`,
-        `What are the main concerns about ${ticker}?`,
-        `Summarize the bull and bear cases for ${ticker}`,
+    useEffect(() => {
+        if (crossTabTicker) {
+            setSearchInput(crossTabTicker);
+            setTicker(crossTabTicker);
+            setMessages([]);
+            clearCrossTabTicker();
+        }
+    }, [crossTabTicker]);
+
+    const generalQuestions = [
+        'What macro factors are moving markets today?',
+        'Explain implied volatility and why it matters for options pricing.',
+        'What is the difference between a call and a put option?',
+        'How do I read an options chain?',
     ];
+
+    const tickerQuestions = ticker ? [
+        `Why is ${ticker} sentiment bullish or bearish right now?`,
+        `What are traders saying about ${ticker}?`,
+        `What are the key risks for ${ticker} over the next 30 days?`,
+        `Summarize the bull and bear cases for ${ticker}`,
+    ] : generalQuestions;
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -170,14 +186,30 @@ const AIAnalysis = () => {
                             <div className="w-12 h-12 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center mb-4">
                                 <Bot size={24} className="text-gray-400 dark:text-gray-500" />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                                Ask me about {ticker}
-                            </h3>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 max-w-sm">
-                                I can analyze StockTwits posts and help you understand what traders are saying about any stock.
-                            </p>
+                            {ticker ? (
+                                <>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                        Ask me about <span className="font-mono text-indigo-600 dark:text-indigo-400">{ticker}</span>
+                                    </h3>
+                                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 max-w-sm">
+                                        I can analyze StockTwits sentiment and help you understand what traders are saying. Or ask anything about markets.
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                        Ask me anything about markets
+                                    </h3>
+                                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-1 max-w-sm">
+                                        Set a ticker above for stock-specific sentiment analysis, or ask a general question to get started.
+                                    </p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
+                                        Type a ticker symbol → hit <span className="font-semibold">Set</span> → then ask away
+                                    </p>
+                                </>
+                            )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-lg">
-                                {suggestedQuestions.map((q, i) => (
+                                {tickerQuestions.map((q, i) => (
                                     <SuggestedQuestion key={i} question={q} onClick={sendMessage} />
                                 ))}
                             </div>
@@ -208,7 +240,7 @@ const AIAnalysis = () => {
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            placeholder={`Ask about ${ticker} sentiment...`}
+                            placeholder={ticker ? `Ask about ${ticker} sentiment...` : 'Ask anything about markets...'}
                             disabled={loading}
                             className="flex-1 bg-stone-50 dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400/20 placeholder-gray-400 dark:placeholder-gray-500 theme-transition"
                         />

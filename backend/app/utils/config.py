@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     # Financial Modeling Prep
     FMP_API_KEY: str = ""
 
+    # Demo mode — swaps FMP for realistic mock data (no API key needed)
+    DEMO_MODE: bool = False
+
     class Config:
         env_file = ".env"
         case_sensitive = True
