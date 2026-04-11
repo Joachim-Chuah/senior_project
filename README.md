@@ -164,7 +164,7 @@ source venv/bin/activate
 pytest -v
 ```
 
-Tests covering sentiment scoring, Black-Scholes pricing, options calculations, market helpers, and the confidence engine.
+Tests covering all backend services and API endpoints.
 
 ---
 
