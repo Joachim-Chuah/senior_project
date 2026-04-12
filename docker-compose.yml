@@ -1,0 +1,20 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_DEMO_MODE: ${VITE_DEMO_MODE:-true}
+        VITE_LOGO_DEV_TOKEN: ${VITE_LOGO_DEV_TOKEN:-}
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

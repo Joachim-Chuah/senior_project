@@ -87,19 +87,39 @@ sentiviz/
 
 ## Quick Start
 
-### Prerequisites
-- Python 3.11+
-- Node.js 18+
-- API keys: Groq, Tavily (optional) — Financial Modeling Prep (FMP) required only for live mode
+### Option A — Docker (recommended)
 
-### 1. Clone the Repository
+**Prerequisites:** Docker + Docker Compose
+
+```bash
+git clone https://github.com/Joachim-Chuah/senior_project.git
+cd senior_project/sentiviz
+
+cp backend/.env.example backend/.env
+# Add your API keys to backend/.env
+
+docker compose up --build
+```
+
+App available at **http://localhost** · API docs at **http://localhost:8000/docs**
+
+> Demo mode is on by default — runs fully without a Financial Modeling Prep key.
+> To disable, set `DEMO_MODE=false` in `backend/.env` and add your `FMP_API_KEY`.
+
+---
+
+### Option B — Manual Setup
+
+**Prerequisites:** Python 3.11+ · Node.js 18+
+
+#### 1. Clone
 
 ```bash
 git clone https://github.com/Joachim-Chuah/senior_project.git
 cd senior_project/sentiviz
 ```
 
-### 2. Backend Setup
+#### 2. Backend
 
 ```bash
 cd backend
@@ -113,7 +133,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 API available at `http://localhost:8000` · Docs at `http://localhost:8000/docs`
 
-### 3. Frontend Setup
+#### 3. Frontend
 
 ```bash
 cd frontend

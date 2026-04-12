@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Package docker-compose bundle
+        run: |
+          VERSION=${{ github.ref_name }}
+          BUNDLE="sentiviz-docker-${VERSION}"
+          mkdir -p "${BUNDLE}"
+
+          cp docker-compose.yml           "${BUNDLE}/"
+          cp backend/Dockerfile           "${BUNDLE}/Dockerfile.backend"
+          cp frontend/Dockerfile          "${BUNDLE}/Dockerfile.frontend"
+          cp frontend/nginx.conf          "${BUNDLE}/nginx.conf"
+          cp backend/.env.example         "${BUNDLE}/.env.example"
+
+          zip -r "${BUNDLE}.zip" "${BUNDLE}/"
+          echo "BUNDLE_ZIP=${BUNDLE}.zip" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.BUNDLE_ZIP }}
+          generate_release_notes: true
+          body: |
+            ## Quick Start
+
+            1. Download `${{ env.BUNDLE_ZIP }}` and unzip it
+            2. Copy `.env.example` → `backend/.env` and add your API keys
+            3. Run:
+
+            ```bash
+            docker compose up --build
+            ```
+
+            App will be available at **http://localhost**
