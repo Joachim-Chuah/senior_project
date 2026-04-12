@@ -126,9 +126,9 @@ body {
   }
 
   /* ─── Blob drift animations ─────────────────────────────────────────────── */
-  .blob-1 { animation: blobDrift1 28s ease-in-out infinite; }
-  .blob-2 { animation: blobDrift2 34s ease-in-out infinite; }
-  .blob-3 { animation: blobDrift3 22s ease-in-out infinite; }
+  .blob-1 { animation: blobDrift1 10s ease-in-out infinite; }
+  .blob-2 { animation: blobDrift2 13s ease-in-out infinite; }
+  .blob-3 { animation: blobDrift3  8s ease-in-out infinite; }
 
   /* ─── Noise grain overlay ───────────────────────────────────────────────── */
   .noise-overlay {
@@ -233,6 +233,6 @@ body {
 }
 
 @keyframes blobDrift3 {
-  0%, 100% { transform: translate(-50%, -50%) scale(1);    }
-  50%       { transform: translate(-50%, -50%) scale(1.12); }
+  0%, 100% { transform: scale(1);    }
+  50%       { transform: scale(1.12); }
 }

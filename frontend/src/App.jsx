@@ -142,47 +142,60 @@ function App() {
           backgroundImage: 'radial-gradient(circle, var(--dot) 1px, transparent 1px)',
           backgroundSize: '28px 28px',
         }} />
-        {/* Blob — top right */}
-        <div ref={blob1Ref} className="absolute" style={{
-          top:    darkMode ? '-300px' : '-120px',
-          right:  darkMode ? '-300px' : '-120px',
+        {/* Blob — top right (outer = CSS drift, inner = mouse/scroll) */}
+        <div className="blob-1 absolute" style={{
+          top:   darkMode ? '-300px' : '-120px',
+          right: darkMode ? '-300px' : '-120px',
           width:  darkMode ? '1100px' : '580px',
           height: darkMode ? '1100px' : '580px',
-          borderRadius: '50%',
-          background: darkMode
-            ? 'radial-gradient(circle, rgba(79,70,229,0.55) 0%, transparent 70%)'
-            : 'radial-gradient(circle, rgba(99,70,229,0.32) 0%, transparent 70%)',
-          filter: 'blur(80px)',
-          transform: `translateY(${scrollY * -0.22}px)`,
-          willChange: 'transform',
-        }} />
-        {/* Blob — bottom left */}
-        <div ref={blob2Ref} className="absolute" style={{
+        }}>
+          <div ref={blob1Ref} style={{
+            width: '100%', height: '100%',
+            borderRadius: '50%',
+            background: darkMode
+              ? 'radial-gradient(circle, rgba(79,70,229,0.55) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(99,70,229,0.32) 0%, transparent 70%)',
+            filter: 'blur(80px)',
+            transform: `translateY(${scrollY * -0.22}px)`,
+            willChange: 'transform',
+          }} />
+        </div>
+        {/* Blob — bottom left (outer = CSS drift, inner = mouse/scroll) */}
+        <div className="blob-2 absolute" style={{
           bottom: '-300px', left: '-300px',
           width:  darkMode ? '1000px' : '900px',
           height: darkMode ? '1000px' : '900px',
-          borderRadius: '50%',
-          background: darkMode
-            ? 'radial-gradient(circle, rgba(6,182,212,0.38) 0%, transparent 70%)'
-            : 'radial-gradient(circle, rgba(13,59,102,0.40) 0%, transparent 70%)',
-          filter: 'blur(80px)',
-          transform: `translateY(${scrollY * -0.1}px)`,
-          willChange: 'transform',
-        }} />
-        {/* Blob — center fill */}
-        <div ref={blob3Ref} className="absolute" style={{
+        }}>
+          <div ref={blob2Ref} style={{
+            width: '100%', height: '100%',
+            borderRadius: '50%',
+            background: darkMode
+              ? 'radial-gradient(circle, rgba(6,182,212,0.38) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(13,59,102,0.40) 0%, transparent 70%)',
+            filter: 'blur(80px)',
+            transform: `translateY(${scrollY * -0.1}px)`,
+            willChange: 'transform',
+          }} />
+        </div>
+        {/* Blob — center fill (outer = CSS drift, inner = mouse/scroll) */}
+        <div className="blob-3 absolute" style={{
           top: '40%', left: '50%',
           width:  darkMode ? '900px' : '700px',
           height: darkMode ? '900px' : '700px',
-          borderRadius: '50%',
-          background: darkMode
-            ? 'radial-gradient(circle, rgba(79,70,229,0.55) 0%, transparent 70%)'
-            : 'radial-gradient(circle, rgba(99,70,229,0.20) 0%, transparent 70%)',
-          opacity: 0.5,
-          filter: 'blur(100px)',
-          transform: `translate(-50%, calc(-50% + ${scrollY * -0.16}px))`,
-          willChange: 'transform',
-        }} />
+          transform: 'translate(-50%, -50%)',
+        }}>
+          <div ref={blob3Ref} style={{
+            width: '100%', height: '100%',
+            borderRadius: '50%',
+            background: darkMode
+              ? 'radial-gradient(circle, rgba(79,70,229,0.55) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(99,70,229,0.20) 0%, transparent 70%)',
+            opacity: 0.5,
+            filter: 'blur(100px)',
+            transform: `translateY(${scrollY * -0.16}px)`,
+            willChange: 'transform',
+          }} />
+        </div>
       </div>
 
       <Navbar
