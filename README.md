@@ -178,13 +178,24 @@ UI available at `http://localhost:5173`
 
 ## Testing
 
+202 unit tests across 8 test files covering all backend services and API endpoints. Tests run automatically on every push via GitHub Actions.
+
 ```bash
 cd backend
 source venv/bin/activate
 pytest -v
 ```
 
-Tests covering all backend services and API endpoints.
+| File | What it covers |
+|------|---------------|
+| `test_black_scholes.py` | Black-Scholes pricing, Greeks (Delta, Gamma, Theta, Vega), put-call parity, expired options |
+| `test_confidence_service.py` | Confidence scoring, sigmoid, feature vectors, outcome recording, state persistence |
+| `test_fmp_service.py` | Financial Modeling Prep API client — quotes, search, gainers/losers, missing key handling |
+| `test_mock_fmp_service.py` | Demo mode mock data — realistic price generation, gainers/losers, symbol search |
+| `test_stocktwits_service.py` | StockTwits sentiment parsing, signal calculation, bullish/bearish scoring |
+| `test_rss_service.py` | RSS news feed parsing, date handling, multi-feed aggregation |
+| `test_market_helpers.py` | Trading date logic, market hours, summary cache read/write |
+| `test_api.py` | FastAPI endpoint smoke tests — health check, demo options, invalid tickers |
 
 ---
 
