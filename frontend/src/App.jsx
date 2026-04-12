@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
@@ -24,14 +24,6 @@ function App() {
     setCrossTabTicker(null);
   }
 
-  const [scrollY, setScrollY] = useState(0);
-
-  useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem('darkMode');
     if (stored !== null) return stored === 'true';
@@ -48,6 +40,64 @@ function App() {
   }, [darkMode]);
 
   const toggleDarkMode = () => setDarkMode(prev => !prev);
+
+  const [scrollY, setScrollY] = useState(0);
+
+  // Blob + spotlight refs for direct DOM manipulation (no re-render on mousemove)
+  const blob1Ref     = useRef(null);
+  const blob2Ref     = useRef(null);
+  const blob3Ref     = useRef(null);
+  const spotlightRef = useRef(null);
+  const mouseRef     = useRef({ x: 0, y: 0, rawX: 0, rawY: 0 });
+  const darkModeRef  = useRef(darkMode);
+  const rafRef       = useRef(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Keep darkModeRef in sync so the RAF callback can read it without a closure
+  useEffect(() => { darkModeRef.current = darkMode; }, [darkMode]);
+
+  useEffect(() => {
+    const onMouseMove = (e) => {
+      mouseRef.current = {
+        x: e.clientX / window.innerWidth  - 0.5,
+        y: e.clientY / window.innerHeight - 0.5,
+        rawX: e.clientX,
+        rawY: e.clientY,
+      };
+      if (!rafRef.current) {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = null;
+          const { x, y, rawX, rawY } = mouseRef.current;
+          const sy = window.scrollY;
+
+          if (blob1Ref.current)
+            blob1Ref.current.style.transform = `translate(${x * -120}px, calc(${y * -120}px + ${sy * -0.22}px))`;
+          if (blob2Ref.current)
+            blob2Ref.current.style.transform = `translate(${x * -60}px, calc(${y * -60}px + ${sy * -0.1}px))`;
+          if (blob3Ref.current)
+            blob3Ref.current.style.transform = `translate(calc(-50% + ${x * -90}px), calc(-50% + ${y * -90}px + ${sy * -0.16}px))`;
+
+          if (spotlightRef.current) {
+            const color = darkModeRef.current
+              ? 'rgba(99,70,229,0.13)'
+              : 'rgba(99,70,229,0.07)';
+            spotlightRef.current.style.background =
+              `radial-gradient(500px circle at ${rawX}px ${rawY}px, ${color}, transparent 70%)`;
+          }
+        });
+      }
+    };
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -79,6 +129,12 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen theme-transition" style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
 
+      {/* ── Cursor spotlight ── */}
+      <div ref={spotlightRef} className="fixed inset-0 pointer-events-none" style={{ zIndex: 1 }} />
+
+      {/* ── Noise grain overlay ── */}
+      <div className="noise-overlay fixed inset-0 pointer-events-none" style={{ zIndex: 1 }} />
+
       {/* ── Background effects ── */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         {/* Dot grid */}
@@ -87,7 +143,7 @@ function App() {
           backgroundSize: '28px 28px',
         }} />
         {/* Blob — top right */}
-        <div className="absolute" style={{
+        <div ref={blob1Ref} className="absolute" style={{
           top:    darkMode ? '-300px' : '-120px',
           right:  darkMode ? '-300px' : '-120px',
           width:  darkMode ? '1100px' : '580px',
@@ -101,7 +157,7 @@ function App() {
           willChange: 'transform',
         }} />
         {/* Blob — bottom left */}
-        <div className="absolute" style={{
+        <div ref={blob2Ref} className="absolute" style={{
           bottom: '-300px', left: '-300px',
           width:  darkMode ? '1000px' : '900px',
           height: darkMode ? '1000px' : '900px',
@@ -114,7 +170,7 @@ function App() {
           willChange: 'transform',
         }} />
         {/* Blob — center fill */}
-        <div className="absolute" style={{
+        <div ref={blob3Ref} className="absolute" style={{
           top: '40%', left: '50%',
           width:  darkMode ? '900px' : '700px',
           height: darkMode ? '900px' : '700px',

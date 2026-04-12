@@ -2,6 +2,22 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, Sparkles, Newspaper } from 'lucide-react';
 import api from '../utils/api';
 import { getLogoUrl, tickerColor, formatPct, formatPrice, formatVolume, timeAgo } from '../utils/marketHelpers';
+import { useCountUp } from '../utils/useCountUp';
+
+function AnimatedPrice({ value }) {
+  const v = useCountUp(parseFloat(value) || 0);
+  return <>{formatPrice(v)}</>;
+}
+
+function AnimatedPct({ value }) {
+  const v = useCountUp(parseFloat(value) || 0);
+  return <>{formatPct(v)}</>;
+}
+
+function AnimatedChange({ value, up }) {
+  const v = useCountUp(Math.abs(parseFloat(value) || 0));
+  return <>{up ? '+' : '-'}{v.toFixed(2)} today</>;
+}
 
 function TickerLogo({ ticker, size = 32, className = '' }) {
   const [failed, setFailed] = useState(false);
@@ -70,15 +86,17 @@ function IndicesStrip({ indices }) {
                     color: up ? '#16a34a' : '#dc2626',
                   }}
                 >
-                  {formatPct(quote.changesPercentage)}
+                  <AnimatedPct value={quote.changesPercentage} />
                 </span>
               </div>
-              <div className="text-lg font-bold t-primary font-mono leading-none">{formatPrice(quote.price)}</div>
+              <div className="text-lg font-bold t-primary font-mono leading-none">
+                <AnimatedPrice value={quote.price} />
+              </div>
               <div
                 className="text-xs font-mono"
                 style={{ color: up ? '#16a34a' : '#dc2626' }}
               >
-                {up ? '+' : ''}{parseFloat(quote.change).toFixed(2)} today
+                <AnimatedChange value={quote.change} up={up} />
               </div>
             </a>
           );
