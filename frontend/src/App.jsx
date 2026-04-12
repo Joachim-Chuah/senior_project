@@ -23,6 +23,15 @@ function App() {
   function clearCrossTabTicker() {
     setCrossTabTicker(null);
   }
+
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem('darkMode');
     if (stored !== null) return stored === 'true';
@@ -68,7 +77,58 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-cream dark:bg-gray-950 theme-transition text-gray-900 dark:text-white">
+    <div className="flex flex-col min-h-screen theme-transition" style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
+
+      {/* ── Background effects ── */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Dot grid */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'radial-gradient(circle, var(--dot) 1px, transparent 1px)',
+          backgroundSize: '28px 28px',
+        }} />
+        {/* Blob — top right */}
+        <div className="absolute" style={{
+          top:    darkMode ? '-300px' : '-120px',
+          right:  darkMode ? '-300px' : '-120px',
+          width:  darkMode ? '1100px' : '580px',
+          height: darkMode ? '1100px' : '580px',
+          borderRadius: '50%',
+          background: darkMode
+            ? 'radial-gradient(circle, rgba(79,70,229,0.55) 0%, transparent 70%)'
+            : 'radial-gradient(circle, rgba(99,70,229,0.32) 0%, transparent 70%)',
+          filter: 'blur(80px)',
+          transform: `translateY(${scrollY * -0.22}px)`,
+          willChange: 'transform',
+        }} />
+        {/* Blob — bottom left */}
+        <div className="absolute" style={{
+          bottom: '-300px', left: '-300px',
+          width:  darkMode ? '1000px' : '900px',
+          height: darkMode ? '1000px' : '900px',
+          borderRadius: '50%',
+          background: darkMode
+            ? 'radial-gradient(circle, rgba(6,182,212,0.38) 0%, transparent 70%)'
+            : 'radial-gradient(circle, rgba(13,59,102,0.40) 0%, transparent 70%)',
+          filter: 'blur(80px)',
+          transform: `translateY(${scrollY * -0.1}px)`,
+          willChange: 'transform',
+        }} />
+        {/* Blob — center fill */}
+        <div className="absolute" style={{
+          top: '40%', left: '50%',
+          width:  darkMode ? '900px' : '700px',
+          height: darkMode ? '900px' : '700px',
+          borderRadius: '50%',
+          background: darkMode
+            ? 'radial-gradient(circle, rgba(79,70,229,0.55) 0%, transparent 70%)'
+            : 'radial-gradient(circle, rgba(99,70,229,0.20) 0%, transparent 70%)',
+          opacity: 0.5,
+          filter: 'blur(100px)',
+          transform: `translate(-50%, calc(-50% + ${scrollY * -0.16}px))`,
+          willChange: 'transform',
+        }} />
+      </div>
+
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -76,8 +136,10 @@ function App() {
         toggleDarkMode={toggleDarkMode}
         onLogoClick={() => setLaunched(false)}
       />
-      <main className="flex-1 mt-14 bg-cream dark:bg-gray-950 theme-transition">
-        {renderContent()}
+      <main className="relative z-10 flex-1 mt-14">
+        <div key={activeTab} className="tab-content">
+          {renderContent()}
+        </div>
       </main>
     </div>
   );

@@ -43,66 +43,146 @@ const features = DEMO_MODE ? demoFeatures : liveFeatures;
 
 const Landing = ({ onLaunch, darkMode, toggleDarkMode }) => {
     return (
-        <div className="min-h-screen flex flex-col bg-cream dark:bg-gray-950 theme-transition text-gray-900 dark:text-white">
+        <div
+            className="min-h-screen flex flex-col theme-transition"
+            style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}
+        >
+            {/* Background effects */}
+            <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+                {/* Dot grid */}
+                <div className="absolute inset-0" style={{
+                    backgroundImage: 'radial-gradient(circle, var(--dot) 1px, transparent 1px)',
+                    backgroundSize: '28px 28px',
+                }} />
+                {/* Ambient glow top */}
+                <div className="absolute inset-0" style={{
+                    background: 'radial-gradient(ellipse 70% 40% at 50% 0%, rgba(13,59,102,0.07) 0%, transparent 70%)',
+                }} />
+                {/* Blob — bottom right */}
+                <div className="absolute" style={{
+                    bottom: '-150px', right: '-150px',
+                    width: '500px', height: '500px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, var(--blob-2) 0%, transparent 70%)',
+                    filter: 'blur(60px)',
+                }} />
+            </div>
 
-            {/* Top bar */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-dashed border-gray-200 dark:border-gray-800">
-                <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 bg-gray-900 dark:bg-white rounded-md flex items-center justify-center">
-                        <BarChart2 size={14} className="text-white dark:text-gray-900" />
+            {/* Navbar */}
+            <div
+                className="relative z-10 flex items-center justify-between px-8 py-5"
+                style={{ borderBottom: '1px solid var(--border)' }}
+            >
+                <div className="flex items-center gap-2.5">
+                    <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: 'var(--accent)' }}
+                    >
+                        <BarChart2 size={15} style={{ color: 'var(--accent-text)' }} />
                     </div>
-                    <span className="text-sm font-bold tracking-tight">Sentiviz</span>
+                    <span className="text-base font-bold tracking-tight" style={{ color: 'var(--text)' }}>
+                        Sentiviz
+                    </span>
                 </div>
                 <button
                     onClick={toggleDarkMode}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200 transition-all duration-150"
+                    className="btn-ghost flex items-center gap-2 px-3 py-1.5 text-sm"
                 >
-                    {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+                    {darkMode ? <Sun size={14} /> : <Moon size={14} />}
                     <span>{darkMode ? 'Light' : 'Dark'}</span>
                 </button>
             </div>
 
             {/* Hero */}
-            <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-16">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-dashed border-gray-300 dark:border-gray-700 text-xs font-medium text-gray-500 dark:text-gray-400 mb-6">
-                    <span className={`w-1.5 h-1.5 rounded-full ${DEMO_MODE ? 'bg-amber-400' : 'bg-emerald-500 animate-pulse'}`} />
+            <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 py-24">
+
+                {/* Badge */}
+                <div
+                    className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium mb-10 theme-transition"
+                    style={{
+                        backgroundColor: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text-muted)',
+                        boxShadow: 'var(--shadow)',
+                    }}
+                >
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${DEMO_MODE ? 'bg-amber-400' : 'bg-emerald-500 animate-pulse'}`} />
                     {DEMO_MODE ? 'Demo mode · Black-Scholes pricing' : 'Live market data'}
                 </div>
 
-                <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-gray-900 dark:text-white max-w-2xl leading-tight">
+                {/* Headline */}
+                <h1
+                    className="text-7xl md:text-8xl font-bold leading-none mb-6 gradient-text"
+                    style={{
+                        letterSpacing: '-0.04em',
+                        lineHeight: '0.95',
+                    }}
+                >
                     Sentiviz
                 </h1>
 
-                <p className="mt-4 text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-xl leading-relaxed">
-                    Real-time sentiment + AI-powered confidence signals for stocks and ETFs.
+                {/* Sub-headline */}
+                <p
+                    className="text-2xl md:text-3xl font-semibold max-w-lg leading-snug mb-4"
+                    style={{ color: 'var(--text)', letterSpacing: '-0.02em' }}
+                >
+                    Trade with context.
+                </p>
+                <p
+                    className="text-base md:text-lg max-w-md leading-relaxed mb-12"
+                    style={{ color: 'var(--text)', opacity: 0.7 }}
+                >
+                    Real-time sentiment, AI-powered signals, and options analytics — in one unified dashboard.
                 </p>
 
+                {/* CTA */}
                 <button
                     onClick={onLaunch}
-                    className="mt-8 inline-flex items-center gap-2 bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 px-6 py-3 rounded-xl font-semibold text-sm transition-colors"
+                    className="group btn-primary inline-flex items-center gap-3 px-8 py-4 text-base rounded-xl"
+                    style={{ boxShadow: '0 4px 20px rgba(13,59,102,0.25)' }}
                 >
                     Launch App
-                    <ArrowRight size={16} />
+                    <ArrowRight size={17} className="transition-transform duration-200 group-hover:translate-x-1" />
                 </button>
 
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">
+                <p className="mt-5 text-xs" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>
                     No sign-up required
                 </p>
             </div>
 
             {/* Feature cards */}
-            <div className="px-6 pb-12 max-w-4xl mx-auto w-full">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {features.map(({ icon: Icon, title, description }) => (
+            <div className="relative z-10 px-6 pb-20 max-w-5xl mx-auto w-full">
+                <p
+                    className="text-center text-xs font-semibold uppercase tracking-widest mb-8"
+                    style={{ color: 'var(--text-muted)', opacity: 0.6 }}
+                >
+                    What's inside
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    {features.map(({ icon: Icon, title, description }, i) => (
                         <div
                             key={title}
-                            className="bg-white dark:bg-gray-900 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-5 text-left theme-transition"
+                            className="card p-6 text-left cursor-default"
+                            style={{
+                                animationDelay: `${i * 80}ms`,
+                                animation: 'fadeSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both',
+                            }}
                         >
-                            <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
-                                <Icon size={16} className="text-gray-700 dark:text-gray-300" />
+                            <div
+                                className="w-10 h-10 rounded-xl flex items-center justify-center mb-5"
+                                style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border)' }}
+                            >
+                                <Icon size={18} style={{ color: 'var(--accent)' }} />
                             </div>
-                            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1.5">{title}</h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{description}</p>
+                            <h3
+                                className="text-sm font-semibold mb-2"
+                                style={{ color: 'var(--text)', letterSpacing: '-0.01em' }}
+                            >
+                                {title}
+                            </h3>
+                            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                                {description}
+                            </p>
                         </div>
                     ))}
                 </div>

@@ -6,19 +6,29 @@ import { getErrorMessage } from '../utils/errorHandler';
 
 const MessageBubble = ({ message, isUser }) => (
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
-        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-            isUser ? 'bg-gray-900 dark:bg-white' : 'bg-stone-200 dark:bg-gray-700'
-        }`}>
+        <div
+            className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+            style={{ backgroundColor: isUser ? 'var(--accent)' : 'var(--surface-2)', border: '1px solid var(--border)' }}
+        >
             {isUser
-                ? <User size={13} className="text-white dark:text-gray-900" />
-                : <Bot size={13} className="text-gray-600 dark:text-gray-300" />
+                ? <User size={13} style={{ color: 'var(--accent-text)' }} />
+                : <Bot size={13} style={{ color: 'var(--text-muted)' }} />
             }
         </div>
-        <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed border border-dashed ${
-            isUser
-                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-700 dark:border-gray-200 rounded-tr-md'
-                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-tl-md'
-        }`}>
+        <div
+            className="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
+            style={isUser ? {
+                backgroundColor: 'var(--accent)',
+                color: 'var(--accent-text)',
+                borderRadius: '16px 16px 4px 16px',
+            } : {
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--text)',
+                borderRadius: '16px 16px 16px 4px',
+                backdropFilter: 'blur(8px)',
+            }}
+        >
             <p className="whitespace-pre-wrap">{message.content}</p>
         </div>
     </div>
@@ -27,7 +37,20 @@ const MessageBubble = ({ message, isUser }) => (
 const SuggestedQuestion = ({ question, onClick }) => (
     <button
         onClick={() => onClick(question)}
-        className="text-left text-xs bg-white dark:bg-gray-800 hover:bg-stone-50 dark:hover:bg-gray-700 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-gray-600 dark:text-gray-300 transition-colors leading-snug"
+        className="text-left text-xs rounded-xl px-3 py-2.5 leading-snug transition-all duration-200 theme-transition"
+        style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
+        }}
+        onMouseEnter={e => {
+            e.currentTarget.style.borderColor = 'var(--border-hover)';
+            e.currentTarget.style.color = 'var(--text)';
+        }}
+        onMouseLeave={e => {
+            e.currentTarget.style.borderColor = 'var(--border)';
+            e.currentTarget.style.color = 'var(--text-muted)';
+        }}
     >
         {question}
     </button>
@@ -98,7 +121,6 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
             setMessages(prev => [...prev, { role: 'assistant', content: res.data.response }]);
         } catch (err) {
             setError(getErrorMessage(err));
-            console.error('Error in AI chat:', err);
         } finally {
             setLoading(false);
         }
@@ -115,7 +137,6 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
             }]);
         } catch (err) {
             setError(getErrorMessage(err));
-            console.error('Error generating analysis:', err);
         } finally {
             setLoading(false);
         }
@@ -124,15 +145,23 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
     return (
         <div className="p-6 lg:p-8 h-[calc(100vh-64px)] lg:h-screen flex flex-col min-h-0">
             {/* Header */}
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-5 border-b border-dashed border-gray-300 dark:border-gray-700 flex-shrink-0">
+            <header
+                className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-5 flex-shrink-0"
+                style={{ borderBottom: '1px solid var(--border)' }}
+            >
                 <div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
-                        <Sparkles className="text-gray-500 dark:text-gray-400" size={22} />
+                    <h2
+                        className="text-3xl font-bold flex items-center gap-2.5"
+                        style={{ color: 'var(--text)', letterSpacing: '-0.02em' }}
+                    >
+                        <Sparkles size={22} style={{ color: 'var(--text-muted)' }} />
                         AI Analysis
                     </h2>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                    <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
                         Ask about sentiment for{' '}
-                        <span className="font-mono font-semibold text-gray-800 dark:text-indigo-400">{ticker}</span>
+                        <span className="font-mono font-semibold" style={{ color: 'var(--text)' }}>
+                            {ticker || '—'}
+                        </span>
                     </p>
                 </div>
 
@@ -146,11 +175,24 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
                                 setValidationError(null);
                             }}
                             placeholder="Search Stocks & ETFs"
-                            className={`bg-white dark:bg-gray-800 border border-dashed ${validationError ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'} text-gray-900 dark:text-white rounded-lg px-3 py-2 w-52 focus:outline-none focus:ring-2 focus:ring-gray-400/20 uppercase font-mono text-sm theme-transition`}
+                            className="px-3 py-2 w-52 rounded-xl font-mono text-sm focus:outline-none transition-all duration-200 theme-transition"
+                            style={{
+                                background: 'var(--surface)',
+                                border: `1px solid ${validationError ? '#ef4444' : 'var(--border)'}`,
+                                color: 'var(--text)',
+                                backdropFilter: 'blur(8px)',
+                            }}
                         />
                         <button
                             type="submit"
-                            className="bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-medium text-sm transition-colors theme-transition"
+                            className="px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 theme-transition"
+                            style={{
+                                background: 'var(--surface)',
+                                border: '1px solid var(--border)',
+                                color: 'var(--text)',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-hover)'}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
                         >
                             Set
                         </button>
@@ -158,7 +200,10 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
                             type="button"
                             onClick={generateAnalysis}
                             disabled={loading}
-                            className="bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-text)' }}
+                            onMouseEnter={e => { if (!loading) e.currentTarget.style.opacity = '0.85'; }}
+                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
                         >
                             <Sparkles size={13} />
                             Auto Analyze
@@ -169,41 +214,53 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
             </header>
 
             {error && (
-                <div className="bg-red-50 dark:bg-red-500/10 border border-dashed border-red-300 dark:border-red-500/30 rounded-lg p-3 flex items-center gap-3 mb-4 flex-shrink-0">
-                    <AlertCircle className="text-red-500 dark:text-red-400 flex-shrink-0" size={15} />
+                <div
+                    className="rounded-xl p-3 flex items-center gap-3 mb-4 flex-shrink-0"
+                    style={{
+                        background: 'rgba(239,68,68,0.08)',
+                        border: '1px solid rgba(239,68,68,0.25)',
+                    }}
+                >
+                    <AlertCircle className="text-red-500 flex-shrink-0" size={15} />
                     <div>
-                        <p className="text-red-700 dark:text-red-400 font-medium text-sm">Error</p>
-                        <p className="text-red-500 dark:text-red-300 text-xs mt-0.5">{error}</p>
+                        <p className="text-red-500 font-medium text-sm">Error</p>
+                        <p className="text-red-400 text-xs mt-0.5">{error}</p>
                     </div>
                 </div>
             )}
 
-            {/* Chat Container */}
-            <div className="flex-1 bg-white dark:bg-gray-900 border border-dashed border-gray-300 dark:border-gray-700 rounded-2xl flex flex-col overflow-hidden min-h-0 theme-transition">
+            {/* Chat container */}
+            <div
+                className="flex-1 rounded-2xl flex flex-col overflow-hidden min-h-0 theme-transition"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)', backdropFilter: 'blur(12px)' }}
+            >
                 <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-thin min-h-0">
                     {messages.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-center p-8">
-                            <div className="w-12 h-12 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center mb-4">
-                                <Bot size={24} className="text-gray-400 dark:text-gray-500" />
+                            <div
+                                className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                                style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+                            >
+                                <Bot size={24} style={{ color: 'var(--text-muted)' }} />
                             </div>
                             {ticker ? (
                                 <>
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                                        Ask me about <span className="font-mono text-indigo-600 dark:text-indigo-400">{ticker}</span>
+                                    <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--text)' }}>
+                                        Ask me about <span className="font-mono">{ticker}</span>
                                     </h3>
-                                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 max-w-sm">
-                                        I can analyze StockTwits sentiment and help you understand what traders are saying. Or ask anything about markets.
+                                    <p className="text-sm mb-6 max-w-sm" style={{ color: 'var(--text-muted)' }}>
+                                        I can analyze StockTwits sentiment and help you understand what traders are saying.
                                     </p>
                                 </>
                             ) : (
                                 <>
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                    <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--text)' }}>
                                         Ask me anything about markets
                                     </h3>
-                                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-1 max-w-sm">
-                                        Set a ticker above for stock-specific sentiment analysis, or ask a general question to get started.
+                                    <p className="text-sm mb-1 max-w-sm" style={{ color: 'var(--text-muted)' }}>
+                                        Set a ticker above for stock-specific sentiment analysis, or ask a general question.
                                     </p>
-                                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
+                                    <p className="text-xs mb-6" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
                                         Type a ticker symbol → hit <span className="font-semibold">Set</span> → then ask away
                                     </p>
                                 </>
@@ -221,11 +278,17 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
                             ))}
                             {loading && (
                                 <div className="flex gap-3">
-                                    <div className="w-7 h-7 rounded-full bg-stone-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                        <Bot size={13} className="text-gray-600 dark:text-gray-300" />
+                                    <div
+                                        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                                        style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+                                    >
+                                        <Bot size={13} style={{ color: 'var(--text-muted)' }} />
                                     </div>
-                                    <div className="bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 rounded-2xl rounded-tl-md px-4 py-3">
-                                        <Loader2 size={15} className="animate-spin text-gray-400" />
+                                    <div
+                                        className="rounded-2xl px-4 py-3"
+                                        style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                                    >
+                                        <Loader2 size={15} className="animate-spin" style={{ color: 'var(--text-muted)' }} />
                                     </div>
                                 </div>
                             )}
@@ -234,7 +297,11 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
                     )}
                 </div>
 
-                <form onSubmit={(e) => { e.preventDefault(); sendMessage(inputValue); }} className="p-4 border-t border-dashed border-gray-200 dark:border-gray-700 flex-shrink-0">
+                <form
+                    onSubmit={(e) => { e.preventDefault(); sendMessage(inputValue); }}
+                    className="p-4 flex-shrink-0"
+                    style={{ borderTop: '1px solid var(--border)' }}
+                >
                     <div className="flex gap-2">
                         <input
                             type="text"
@@ -242,12 +309,20 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder={ticker ? `Ask about ${ticker} sentiment...` : 'Ask anything about markets...'}
                             disabled={loading}
-                            className="flex-1 bg-stone-50 dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400/20 placeholder-gray-400 dark:placeholder-gray-500 theme-transition"
+                            className="flex-1 px-4 py-2.5 rounded-xl text-sm focus:outline-none transition-all duration-200 theme-transition"
+                            style={{
+                                background: 'var(--surface-2)',
+                                border: '1px solid var(--border)',
+                                color: 'var(--text)',
+                            }}
                         />
                         <button
                             type="submit"
                             disabled={loading || !inputValue.trim()}
-                            className="bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2.5 rounded-xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-text)' }}
+                            onMouseEnter={e => { if (!loading && inputValue.trim()) e.currentTarget.style.opacity = '0.85'; }}
+                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
                         >
                             <Send size={15} />
                         </button>

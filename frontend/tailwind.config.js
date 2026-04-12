@@ -8,15 +8,42 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
-                serif: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+                sans: ['Inter', 'system-ui', 'sans-serif'],
                 mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
             },
             colors: {
-                cream: '#f5f0e8',
+                cream: {
+                    DEFAULT: '#FAF0CA',
+                    dark:    '#F2E4A8',
+                },
+                navy: {
+                    DEFAULT: '#0D3B66',
+                    light:   '#1A5491',
+                    dark:    '#082848',
+                },
             },
             boxShadow: {
-                card: '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
+                card:       '0 1px 3px 0 rgb(0 0 0 / 0.06)',
+                'card-lg':  '0 8px 32px 0 rgb(0 0 0 / 0.12)',
+            },
+            keyframes: {
+                fadeSlideIn: {
+                    '0%':   { opacity: '0', transform: 'translateY(12px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                fadeIn: {
+                    '0%':   { opacity: '0' },
+                    '100%': { opacity: '1' },
+                },
+                shimmer: {
+                    '0%':   { backgroundPosition: '-200% 0' },
+                    '100%': { backgroundPosition: '200% 0' },
+                },
+            },
+            animation: {
+                'fade-slide-in': 'fadeSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                'fade-in':       'fadeIn 0.2s ease forwards',
+                shimmer:         'shimmer 1.8s infinite linear',
             },
         },
     },
