@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, Sparkles, Newspaper } from 'lucide-react';
+import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, Sparkles, Newspaper, Plus, X, Star } from 'lucide-react';
 import api from '../utils/api';
 import { getLogoUrl, tickerColor, formatPct, formatPrice, formatVolume, timeAgo } from '../utils/marketHelpers';
 import { useCountUp } from '../utils/useCountUp';
@@ -316,9 +316,149 @@ function EndOfDayOverview() {
   );
 }
 
+// ─── Watchlist ────────────────────────────────────────────────────────────────
+
+const SIGNAL_COLORS = {
+  bullish: { color: '#16a34a', bg: 'rgba(22,163,74,0.08)', border: 'rgba(22,163,74,0.3)' },
+  bearish: { color: '#dc2626', bg: 'rgba(220,38,38,0.08)', border: 'rgba(220,38,38,0.3)' },
+  neutral: { color: '#d97706', bg: 'rgba(217,119,6,0.08)',  border: 'rgba(217,119,6,0.3)'  },
+};
+
+function WatchlistSection({ watchlist, addToWatchlist, removeFromWatchlist, navigateTo }) {
+  const [input, setInput] = useState('');
+  const [inputError, setInputError] = useState('');
+  const [sentiments, setSentiments] = useState({});
+  const [fetching, setFetching] = useState({});
+
+  // Fetch sentiment for any ticker that doesn't have data yet
+  useEffect(() => {
+    watchlist.forEach(ticker => {
+      if (sentiments[ticker] !== undefined || fetching[ticker]) return;
+      setFetching(prev => ({ ...prev, [ticker]: true }));
+      api.get(`/sentiment/signal/${ticker}`)
+        .then(res => setSentiments(prev => ({ ...prev, [ticker]: res.data })))
+        .catch(() => setSentiments(prev => ({ ...prev, [ticker]: null })))
+        .finally(() => setFetching(prev => ({ ...prev, [ticker]: false })));
+    });
+  }, [watchlist]);
+
+  function handleAdd(e) {
+    e.preventDefault();
+    const ticker = input.trim().toUpperCase();
+    if (!ticker) return;
+    if (!/^[A-Z]{1,5}$/.test(ticker)) {
+      setInputError('Enter a valid ticker (1–5 letters).');
+      return;
+    }
+    if (watchlist.includes(ticker)) {
+      setInputError(`${ticker} is already in your watchlist.`);
+      return;
+    }
+    addToWatchlist(ticker);
+    setInput('');
+    setInputError('');
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <Star size={14} style={{ color: 'var(--accent)' }} />
+        <h2 className="text-sm font-semibold t-primary">Watchlist</h2>
+        <span className="text-xs t-muted ml-1" style={{ opacity: 0.5 }}>{watchlist.length} ticker{watchlist.length !== 1 ? 's' : ''}</span>
+      </div>
+
+      {/* Add ticker */}
+      <form onSubmit={handleAdd} className="flex gap-2 mb-4">
+        <input
+          type="text"
+          value={input}
+          onChange={e => { setInput(e.target.value.toUpperCase()); setInputError(''); }}
+          placeholder="Add ticker…"
+          maxLength={5}
+          className="flex-1 px-3 py-2 rounded-lg text-sm font-mono theme-transition"
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text)',
+            outline: 'none',
+            maxWidth: '160px',
+          }}
+        />
+        <button
+          type="submit"
+          className="btn-ghost flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm"
+        >
+          <Plus size={14} />
+          Add
+        </button>
+      </form>
+      {inputError && <p className="text-xs mb-3" style={{ color: '#dc2626' }}>{inputError}</p>}
+
+      {watchlist.length === 0 ? (
+        <p className="text-xs t-muted py-4" style={{ opacity: 0.5 }}>No tickers yet — add one above.</p>
+      ) : (
+        <div className="space-y-2">
+          {watchlist.map(ticker => {
+            const data = sentiments[ticker];
+            const loading = fetching[ticker];
+            const signal = data?.signal || 'neutral';
+            const cfg = SIGNAL_COLORS[signal] || SIGNAL_COLORS.neutral;
+            const bullPct = data && data.total_posts > 0
+              ? Math.round((data.bullish_count / data.total_posts) * 100) : null;
+
+            return (
+              <div
+                key={ticker}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl theme-transition"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+              >
+                <button
+                  onClick={() => navigateTo('sentiment', ticker)}
+                  className="flex-1 flex items-center gap-3 text-left min-w-0"
+                >
+                  <span className="text-sm font-bold font-mono t-primary">{ticker}</span>
+                  {loading ? (
+                    <span className="text-xs t-muted" style={{ opacity: 0.5 }}>Loading…</span>
+                  ) : data ? (
+                    <>
+                      <span
+                        className="text-xs font-semibold px-2 py-0.5 rounded-lg capitalize"
+                        style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color }}
+                      >
+                        {signal}
+                      </span>
+                      {bullPct !== null && (
+                        <span className="text-xs t-muted ml-auto pr-2" style={{ opacity: 0.6 }}>
+                          {bullPct}% bull · {data.total_posts} posts
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-xs t-muted" style={{ opacity: 0.5 }}>Unavailable</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => removeFromWatchlist(ticker)}
+                  className="flex-shrink-0 p-1 rounded t-muted transition-colors"
+                  style={{ opacity: 0.4 }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                  onMouseLeave={e => e.currentTarget.style.opacity = '0.4'}
+                  title={`Remove ${ticker}`}
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function Home() {
+export default function Home({ watchlist = [], addToWatchlist, removeFromWatchlist, navigateTo }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -389,6 +529,19 @@ export default function Home() {
       ) : data?.indices?.length > 0 ? (
         <IndicesStrip indices={data.indices} />
       ) : null}
+
+      {/* Watchlist */}
+      <div
+        className="rounded-xl px-5 py-4 theme-transition"
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+      >
+        <WatchlistSection
+          watchlist={watchlist}
+          addToWatchlist={addToWatchlist}
+          removeFromWatchlist={removeFromWatchlist}
+          navigateTo={navigateTo}
+        />
+      </div>
 
       {/* Movers — borderless lists side by side */}
       {loading ? (

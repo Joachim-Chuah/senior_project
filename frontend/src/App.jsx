@@ -15,13 +15,52 @@ function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [crossTabTicker, setCrossTabTicker] = useState(null);
 
-  function navigateTo(tabId, ticker = null) {
+  function goToTab(tabId, ticker = null) {
     setActiveTab(tabId);
-    setCrossTabTicker(ticker);
+    if (ticker) setCrossTabTicker(ticker);
+    window.history.pushState({ launched: true, tab: tabId }, '');
+  }
+
+  function navigateTo(tabId, ticker = null) {
+    goToTab(tabId, ticker);
   }
 
   function clearCrossTabTicker() {
     setCrossTabTicker(null);
+  }
+
+  // Browser back/forward support
+  useEffect(() => {
+    const handlePop = (e) => {
+      const state = e.state;
+      if (!state?.launched) {
+        setLaunched(false);
+        setActiveTab('home');
+      } else {
+        setLaunched(true);
+        setActiveTab(state.tab || 'home');
+      }
+    };
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, []);
+
+  const [watchlist, setWatchlist] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('watchlist') || '[]'); }
+    catch { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('watchlist', JSON.stringify(watchlist));
+  }, [watchlist]);
+
+  function addToWatchlist(ticker) {
+    const t = ticker.toUpperCase().trim();
+    if (t && !watchlist.includes(t)) setWatchlist(prev => [...prev, t]);
+  }
+
+  function removeFromWatchlist(ticker) {
+    setWatchlist(prev => prev.filter(t => t !== ticker));
   }
 
   const [darkMode, setDarkMode] = useState(() => {
@@ -102,13 +141,13 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <Home />;
+        return <Home watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} navigateTo={navigateTo} />;
       case 'dashboard':
-        return DEMO_MODE ? <MockOptionsChain /> : <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
+        return DEMO_MODE ? <MockOptionsChain /> : <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} />;
       case 'confidence':
         return DEMO_MODE ? <BlackScholesGuide /> : <Confidence navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
       case 'sentiment':
-        return <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
+        return <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} />;
       case 'ai':
         return <AIAnalysis navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
       default:
@@ -119,7 +158,10 @@ function App() {
   if (!launched) {
     return (
       <Landing
-        onLaunch={() => setLaunched(true)}
+        onLaunch={() => {
+          setLaunched(true);
+          window.history.pushState({ launched: true, tab: 'home' }, '');
+        }}
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
       />
@@ -200,7 +242,7 @@ function App() {
 
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={goToTab}
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
         onLogoClick={() => setLaunched(false)}
