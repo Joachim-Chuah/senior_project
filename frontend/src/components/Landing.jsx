@@ -1,5 +1,8 @@
-import React from 'react';
-import { LayoutDashboard, BrainCircuit, Sparkles, BarChart2, ArrowRight, Sun, Moon, LineChart, BookOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { LayoutDashboard, BrainCircuit, Sparkles, BarChart2, ArrowRight, Sun, Moon, LineChart, BookOpen, Lock, Eye, EyeOff } from 'lucide-react';
+
+const DEMO_USER = 'demo';
+const DEMO_PASS = 'sentiviz123';
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
@@ -42,6 +45,20 @@ const demoFeatures = [
 const features = DEMO_MODE ? demoFeatures : liveFeatures;
 
 const Landing = ({ onLaunch, darkMode, toggleDarkMode }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState('');
+
+    function handleLogin(e) {
+        e.preventDefault();
+        if (username === DEMO_USER && password === DEMO_PASS) {
+            onLaunch();
+        } else {
+            setError('Invalid username or password.');
+        }
+    }
+
     return (
         <div
             className="min-h-screen flex flex-col theme-transition"
@@ -135,19 +152,66 @@ const Landing = ({ onLaunch, darkMode, toggleDarkMode }) => {
                     Real-time sentiment, AI-powered signals, and options analytics — in one unified dashboard.
                 </p>
 
-                {/* CTA */}
-                <button
-                    onClick={onLaunch}
-                    className="group btn-primary inline-flex items-center gap-3 px-8 py-4 text-base rounded-xl"
-                    style={{ boxShadow: '0 4px 20px rgba(13,59,102,0.25)' }}
+                {/* Login form */}
+                <form
+                    onSubmit={handleLogin}
+                    className="w-full max-w-xs flex flex-col gap-3"
                 >
-                    Launch App
-                    <ArrowRight size={17} className="transition-transform duration-200 group-hover:translate-x-1" />
-                </button>
-
-                <p className="mt-5 text-xs" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>
-                    No sign-up required
-                </p>
+                    <input
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        onChange={e => { setUsername(e.target.value); setError(''); }}
+                        className="w-full px-4 py-3 rounded-xl text-sm theme-transition"
+                        style={{
+                            background: 'var(--surface)',
+                            border: '1px solid var(--border)',
+                            color: 'var(--text)',
+                            outline: 'none',
+                        }}
+                        autoComplete="username"
+                    />
+                    <div className="relative w-full">
+                        <input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="Password"
+                            value={password}
+                            onChange={e => { setPassword(e.target.value); setError(''); }}
+                            className="w-full px-4 py-3 pr-11 rounded-xl text-sm theme-transition"
+                            style={{
+                                background: 'var(--surface)',
+                                border: '1px solid var(--border)',
+                                color: 'var(--text)',
+                                outline: 'none',
+                            }}
+                            autoComplete="current-password"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(prev => !prev)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2"
+                            style={{ color: 'var(--text-muted)', opacity: 0.6 }}
+                            tabIndex={-1}
+                        >
+                            {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                    </div>
+                    {error && (
+                        <p className="text-xs text-center" style={{ color: '#dc2626' }}>{error}</p>
+                    )}
+                    <button
+                        type="submit"
+                        className="group btn-primary inline-flex items-center justify-center gap-3 px-8 py-3.5 text-sm rounded-xl"
+                        style={{ boxShadow: '0 4px 20px rgba(13,59,102,0.25)' }}
+                    >
+                        <Lock size={14} />
+                        Sign in
+                        <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-1" />
+                    </button>
+                    <p className="text-xs text-center" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>
+                        Use <span className="font-mono">demo</span> / <span className="font-mono">sentiviz123</span>
+                    </p>
+                </form>
             </div>
 
             {/* Feature cards */}

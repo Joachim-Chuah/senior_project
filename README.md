@@ -106,6 +106,8 @@ App available at **http://localhost** · API docs at **http://localhost:8000/doc
 > Demo mode is on by default — runs fully without a Financial Modeling Prep key.
 > To disable, set `DEMO_MODE=false` in `backend/.env` and add your `FMP_API_KEY`.
 
+**Demo login:** username `demo` · password `sentiviz123`
+
 ---
 
 ### Option B — Manual Setup
