@@ -864,9 +864,32 @@ const DetailPanel = ({ ticker, onBack, navigateTo, watchlist = [], addToWatchlis
 const Dashboard = ({ navigateTo, crossTabTicker, clearCrossTabTicker, watchlist = [], addToWatchlist, removeFromWatchlist }) => {
     const [ticker, setTicker] = useState(null);
 
+    function openTicker(t) {
+        setTicker(t);
+        window.history.pushState(
+            { ...(window.history.state || {}), detailTicker: t },
+            ''
+        );
+    }
+
+    function closeTicker() {
+        setTicker(null);
+        const { detailTicker, ...rest } = window.history.state || {};
+        window.history.pushState(rest, '');
+    }
+
+    // Handle browser back from detail view
+    useEffect(() => {
+        const handlePop = (e) => {
+            if (!e.state?.detailTicker) setTicker(null);
+        };
+        window.addEventListener('popstate', handlePop);
+        return () => window.removeEventListener('popstate', handlePop);
+    }, []);
+
     useEffect(() => {
         if (crossTabTicker) {
-            setTicker(crossTabTicker);
+            openTicker(crossTabTicker);
             clearCrossTabTicker();
         }
     }, [crossTabTicker]);
@@ -875,7 +898,7 @@ const Dashboard = ({ navigateTo, crossTabTicker, clearCrossTabTicker, watchlist 
         return (
             <DetailPanel
                 ticker={ticker}
-                onBack={() => setTicker(null)}
+                onBack={closeTicker}
                 navigateTo={navigateTo}
                 watchlist={watchlist}
                 addToWatchlist={addToWatchlist}
@@ -886,7 +909,7 @@ const Dashboard = ({ navigateTo, crossTabTicker, clearCrossTabTicker, watchlist 
 
     return (
         <OverviewPanel
-            onSelectTicker={(t) => setTicker(t)}
+            onSelectTicker={openTicker}
             navigateTo={navigateTo}
             watchlist={watchlist}
             removeFromWatchlist={removeFromWatchlist}
