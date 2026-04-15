@@ -90,8 +90,8 @@ class StockTwitsService:
                 bearish_count=len(bearish_posts),
                 neutral_count=len(neutral_posts),
                 total_posts=len(all_posts),
-                bullish_posts=bullish_posts[:5],  # Top 5 bull posts
-                bearish_posts=bearish_posts[:5],  # Top 5 bear posts
+                bullish_posts=bullish_posts,
+                bearish_posts=bearish_posts,
                 company_name=symbol_info.get('title', ticker.upper()),
                 logo_url=symbol_info.get('logo_url'),
                 fetched_at=datetime.now(timezone.utc)

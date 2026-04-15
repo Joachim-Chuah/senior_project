@@ -217,11 +217,11 @@ class TestSentimentScoreCalculation:
         assert sig.total_posts == 9
 
     @pytest.mark.asyncio
-    async def test_bull_bear_posts_capped_at_five(self):
+    async def test_all_bull_posts_returned(self):
         msgs = [_make_msg(id=i, sentiment_basic="Bullish") for i in range(10)]
         self._mock_get(msgs)
         sig = await self.svc.get_sentiment("AAPL")
-        assert len(sig.bullish_posts) <= 5
+        assert len(sig.bullish_posts) == 10
 
     @pytest.mark.asyncio
     async def test_ticker_uppercased_in_result(self):
