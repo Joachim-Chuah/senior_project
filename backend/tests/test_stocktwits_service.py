@@ -9,6 +9,15 @@ from datetime import datetime, timezone
 from app.services.stocktwits_service import StockTwitsService
 
 
+# ─── Shared FinBERT mock ──────────────────────────────────────────────────────
+
+def _mock_finbert(return_label="Neutral"):
+    """Return a FinBERTService mock that always returns return_label per text."""
+    fb = MagicMock()
+    fb.classify_texts = MagicMock(side_effect=lambda texts: [return_label] * len(texts))
+    return fb
+
+
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 def _make_msg(id=1, body="test", sentiment_basic=None, created_at="2024-01-01T12:00:00Z",
@@ -36,7 +45,7 @@ def _make_api_response(messages, symbol_title="Apple Inc", logo_url=None):
 
 class TestParseMessage:
     def setup_method(self):
-        self.svc = StockTwitsService()
+        self.svc = StockTwitsService(finbert=_mock_finbert())
 
     def test_bullish_sentiment(self):
         msg = _make_msg(sentiment_basic="Bullish")
@@ -89,7 +98,7 @@ class TestParseMessage:
 
 class TestEmptySignal:
     def setup_method(self):
-        self.svc = StockTwitsService()
+        self.svc = StockTwitsService(finbert=_mock_finbert())
 
     def test_returns_neutral_signal(self):
         sig = self.svc._empty_signal("TSLA")
@@ -127,7 +136,8 @@ class TestSentimentScoreCalculation:
     """Tests for score and signal logic via mocked HTTP."""
 
     def setup_method(self):
-        self.svc = StockTwitsService()
+        # FinBERT returns Neutral for all untagged posts by default
+        self.svc = StockTwitsService(finbert=_mock_finbert("Neutral"))
 
     def _mock_get(self, messages, symbol_title="Test Corp"):
         mock_resp = MagicMock()
@@ -244,3 +254,86 @@ class TestSentimentScoreCalculation:
         self._mock_get([], symbol_title="NVIDIA Corporation")
         sig = await self.svc.get_sentiment("NVDA")
         assert sig.company_name == "NVIDIA Corporation"
+
+
+# ─── FinBERT fallback ────────────────────────────────────────────────────────
+
+class TestFinBERTFallback:
+    """Untagged posts should be classified by FinBERT instead of staying neutral."""
+
+    def _make_svc(self, finbert_labels):
+        """Build a StockTwitsService with a FinBERT mock returning fixed labels."""
+        fb = MagicMock()
+        label_iter = iter(finbert_labels)
+        fb.classify_texts = MagicMock(side_effect=lambda texts: [next(label_iter) for _ in texts])
+        svc = StockTwitsService(finbert=fb)
+        return svc, fb
+
+    def _mock_get(self, svc, messages, symbol_title="Test Corp"):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = _make_api_response(messages, symbol_title)
+        mock_resp.raise_for_status = MagicMock()
+        svc.session.get = MagicMock(return_value=mock_resp)
+
+    @pytest.mark.asyncio
+    async def test_untagged_posts_classified_by_finbert(self):
+        # 2 untagged posts → FinBERT labels them both Bullish
+        msgs = [_make_msg(id=i, sentiment_basic=None) for i in range(2)]
+        svc, fb = self._make_svc(["Bullish", "Bullish"])
+        self._mock_get(svc, msgs)
+        sig = await svc.get_sentiment("AAPL")
+        assert sig.bullish_count == 2
+        assert sig.bearish_count == 0
+        fb.classify_texts.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_tagged_posts_skip_finbert(self):
+        # All posts already tagged — FinBERT should NOT be called
+        msgs = [_make_msg(id=i, sentiment_basic="Bullish") for i in range(3)]
+        svc, fb = self._make_svc([])
+        self._mock_get(svc, msgs)
+        await svc.get_sentiment("AAPL")
+        fb.classify_texts.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_mixed_tagged_and_untagged(self):
+        # 2 tagged Bullish + 2 untagged → FinBERT labels untagged as Bearish
+        msgs = (
+            [_make_msg(id=i, sentiment_basic="Bullish") for i in range(2)] +
+            [_make_msg(id=i+10, sentiment_basic=None) for i in range(2)]
+        )
+        svc, fb = self._make_svc(["Bearish", "Bearish"])
+        self._mock_get(svc, msgs)
+        sig = await svc.get_sentiment("AAPL")
+        assert sig.bullish_count == 2
+        assert sig.bearish_count == 2
+        # FinBERT only called with the 2 untagged bodies
+        fb.classify_texts.assert_called_once_with([msgs[2]["body"], msgs[3]["body"]])
+
+    @pytest.mark.asyncio
+    async def test_finbert_bearish_lowers_score(self):
+        # Without FinBERT, 5 neutral posts → score 0.0
+        # With FinBERT labelling all 5 Bearish → score should be negative
+        msgs = [_make_msg(id=i, sentiment_basic=None) for i in range(5)]
+        svc, _ = self._make_svc(["Bearish"] * 5)
+        self._mock_get(svc, msgs)
+        sig = await svc.get_sentiment("AAPL")
+        assert sig.score == -1.0
+        assert sig.signal == "bearish"
+
+    @pytest.mark.asyncio
+    async def test_finbert_bullish_raises_score(self):
+        msgs = [_make_msg(id=i, sentiment_basic=None) for i in range(5)]
+        svc, _ = self._make_svc(["Bullish"] * 5)
+        self._mock_get(svc, msgs)
+        sig = await svc.get_sentiment("AAPL")
+        assert sig.score == 1.0
+        assert sig.signal == "bullish"
+
+    @pytest.mark.asyncio
+    async def test_total_posts_includes_finbert_classified(self):
+        msgs = [_make_msg(id=i, sentiment_basic=None) for i in range(4)]
+        svc, _ = self._make_svc(["Neutral"] * 4)
+        self._mock_get(svc, msgs)
+        sig = await svc.get_sentiment("AAPL")
+        assert sig.total_posts == 4

@@ -24,6 +24,8 @@ jobs:
       - name: Install dependencies
         run: |
           cd backend
+          # Install CPU-only torch first (avoids pulling the full CUDA wheel)
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements.txt
 
       - name: Run tests

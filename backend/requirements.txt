@@ -39,3 +39,5 @@ tavily-python>=0.3.0
 
 # ML
 scikit-learn>=1.4.0
+transformers>=4.40.0
+torch>=2.0.0

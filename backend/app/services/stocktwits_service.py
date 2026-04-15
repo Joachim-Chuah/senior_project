@@ -8,6 +8,7 @@ from typing import List, Dict, Optional
 import logging
 
 from app.models.sentiment import StockTwitsPost, SentimentSignal
+from app.services.finbert_service import FinBERTService
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +18,12 @@ STOCKTWITS_API_BASE = "https://api.stocktwits.com/api/2"
 class StockTwitsService:
     """Service for fetching sentiment data from StockTwits"""
 
-    def __init__(self):
+    def __init__(self, finbert=None):
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Sentiviz/1.0'
         })
+        self._finbert = finbert if finbert is not None else FinBERTService()
 
     async def get_sentiment(self, ticker: str, limit: int = 30) -> SentimentSignal:
         """
@@ -46,21 +48,20 @@ class StockTwitsService:
                 return self._empty_signal(ticker)
 
             # Parse messages
-            all_posts = []
-            bullish_posts = []
-            bearish_posts = []
-            neutral_posts = []
+            all_posts = [self._parse_message(msg, ticker) for msg in data['messages'][:limit]]
 
-            for msg in data['messages'][:limit]:
-                post = self._parse_message(msg, ticker)
-                all_posts.append(post)
+            # FinBERT fallback: classify any posts with no StockTwits tag
+            untagged_indices = [i for i, p in enumerate(all_posts) if p.sentiment is None]
+            if untagged_indices:
+                texts = [all_posts[i].body for i in untagged_indices]
+                labels = self._finbert.classify_texts(texts)
+                for i, label in zip(untagged_indices, labels):
+                    all_posts[i].sentiment = label
 
-                if post.sentiment == 'Bullish':
-                    bullish_posts.append(post)
-                elif post.sentiment == 'Bearish':
-                    bearish_posts.append(post)
-                else:
-                    neutral_posts.append(post)
+            # Categorise
+            bullish_posts = [p for p in all_posts if p.sentiment == 'Bullish']
+            bearish_posts = [p for p in all_posts if p.sentiment == 'Bearish']
+            neutral_posts = [p for p in all_posts if p.sentiment not in ('Bullish', 'Bearish')]
 
             # Calculate sentiment score
             # Bullish = +1, Bearish = -1, Neutral = 0

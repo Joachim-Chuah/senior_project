@@ -19,6 +19,7 @@ graph TB
 
         subgraph SERVICES["Services"]
             S_ST["StockTwitsService"]
+            S_FB["FinBERTService\n(text classification)"]
             S_FMP["FMPService"]
             S_GROQ["GroqService"]
             S_CONF["ConfidenceService\n(features + ML)"]
@@ -29,6 +30,7 @@ graph TB
             C_DISK1["summary_cache.json\nEOD summary"]
             C_DISK2["confidence_state.json\nobservations + history"]
             C_MODELS["_models cache\nLogistic regression\nper ticker+horizon"]
+            C_FB["~/.cache/huggingface\nFinBERT weights\n~500 MB · disk cache"]
         end
     end
 
@@ -38,6 +40,7 @@ graph TB
         EXT_GROQ["Groq LLM\n(GROQ_API_KEY)"]
         EXT_TAV["Tavily Search\n(TAVILY_API_KEY)"]
         EXT_YF["yfinance\n(no key)"]
+        EXT_HF["HuggingFace Hub\nProsusAI/finbert\n(download once)"]
     end
 
     FE -->|"HTTP /api/sentiment/*"| R_SENT
@@ -46,6 +49,9 @@ graph TB
 
     R_SENT --> S_ST
     R_SENT --> S_FMP
+    S_ST   --> S_FB
+    S_FB   --> C_FB
+    S_FB   -->|"first run only"| EXT_HF
 
     R_CONF --> S_CONF
     S_CONF --> S_ST
@@ -136,9 +142,15 @@ erDiagram
         int    total_posts
         string error
     }
+    FinBERTClassification {
+        string body FK
+        string label
+        float  score
+    }
 
     SentimentSignal ||--o{ StockTwitsPost : "bullish_posts"
     SentimentSignal ||--o{ StockTwitsPost : "bearish_posts"
+    StockTwitsPost ||--o| FinBERTClassification : "untagged → classified by"
 ```
 
 ### Confidence
@@ -228,6 +240,7 @@ erDiagram
 flowchart LR
     subgraph Sentiment
         SentimentSignal --> StockTwitsPost
+        StockTwitsPost -.->|"untagged posts"| FinBERT["FinBERT\n(text classifier)"]
         SentimentSignal -.->|"summarised as"| SentimentSummary
     end
     subgraph Confidence
@@ -255,6 +268,7 @@ sequenceDiagram
     participant FE as Frontend
     participant R as sentiment.py
     participant ST as StockTwitsService
+    participant FB as FinBERTService
     participant EXT as StockTwits API
 
     FE->>R: GET /sentiment/overview?tickers=AAPL,TSLA,...
@@ -263,13 +277,23 @@ sequenceDiagram
     par asyncio.gather (concurrent per ticker)
         R->>ST: get_sentiment("AAPL")
         ST->>EXT: GET /streams/symbol/AAPL.json
-        EXT-->>ST: posts JSON
-        ST-->>R: SentimentSignal
+        EXT-->>ST: 30 posts JSON
+        ST->>ST: parse — split tagged vs. untagged
+        opt untagged posts exist
+            ST->>FB: classify_texts(untagged bodies)
+            FB-->>ST: Bullish / Bearish / Neutral per post
+        end
+        ST-->>R: SentimentSignal (all 30 posts scored)
     and
         R->>ST: get_sentiment("TSLA")
         ST->>EXT: GET /streams/symbol/TSLA.json
-        EXT-->>ST: posts JSON
-        ST-->>R: SentimentSignal
+        EXT-->>ST: 30 posts JSON
+        ST->>ST: parse — split tagged vs. untagged
+        opt untagged posts exist
+            ST->>FB: classify_texts(untagged bodies)
+            FB-->>ST: Bullish / Bearish / Neutral per post
+        end
+        ST-->>R: SentimentSignal (all 30 posts scored)
     end
 
     R-->>FE: List[SentimentSummary]
