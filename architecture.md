@@ -92,34 +92,40 @@ graph LR
 
 ## 3. Data Model ERD
 
-> These are Pydantic response models, not SQL tables. `PK` marks the natural identifier; `FK` marks embedded composition references.
+> These are Pydantic response models, not SQL tables. `PK` marks the natural identifier; `FK` marks a reference to another model.
+
+### 3.1 Entity-Relationship Overview
+
+1. **Sentiment**: `StockTwitsPost`, `SentimentSignal`, `SentimentSummary`
+2. **Confidence**: `ConfidenceRequest`, `ConfidenceResult`, `FeatureSnapshot`, `TopDriver`
+3. **Market**: `MarketQuote`, `MarketMover`, `NewsItem`, `MarketOverview`
+
+### Sentiment
 
 ```mermaid
 erDiagram
-    SentimentSignal {
-        string ticker PK
-        string signal
-        float  score
-        int    bullish_count
-        int    bearish_count
-        int    neutral_count
-        int    total_posts
-        string company_name
-        string logo_url
-        datetime fetched_at
-        string error
-    }
-
     StockTwitsPost {
-        int    id PK
-        string body
-        string sentiment
+        int      id PK
+        string   body
+        string   sentiment
         datetime created_at
-        string username
-        int    followers
-        string avatar_url
+        string   username
+        int      followers
+        string   avatar_url
     }
-
+    SentimentSignal {
+        string   ticker PK
+        string   signal
+        float    score
+        int      bullish_count
+        int      bearish_count
+        int      neutral_count
+        int      total_posts
+        string   company_name
+        string   logo_url
+        datetime fetched_at
+        string   error
+    }
     SentimentSummary {
         string ticker PK
         string company_name
@@ -131,11 +137,18 @@ erDiagram
         string error
     }
 
+    SentimentSignal ||--o{ StockTwitsPost : "bullish_posts"
+    SentimentSignal ||--o{ StockTwitsPost : "bearish_posts"
+```
+
+### Confidence
+
+```mermaid
+erDiagram
     ConfidenceRequest {
         string ticker PK
         int    horizon PK
     }
-
     ConfidenceResult {
         string   ticker PK
         int      horizon PK
@@ -147,7 +160,6 @@ erDiagram
         string   company_name
         datetime fetched_at
     }
-
     FeatureSnapshot {
         float sent_score
         float sent_volume
@@ -160,18 +172,20 @@ erDiagram
         float implied_move_pct
         float vrp_proxy
     }
-
     TopDriver {
         string label
         string direction
         float  weight
     }
 
-    MarketOverview {
-        string   fetched_at PK
-        string   warning
-    }
+    ConfidenceResult ||--|| FeatureSnapshot : "features"
+    ConfidenceResult ||--o{ TopDriver : "top_drivers"
+```
 
+### Market
+
+```mermaid
+erDiagram
     MarketQuote {
         string symbol PK
         string name
@@ -179,7 +193,6 @@ erDiagram
         float  change
         float  changesPercentage
     }
-
     MarketMover {
         string ticker PK
         string name
@@ -188,7 +201,6 @@ erDiagram
         float  changesPercentage
         float  volume
     }
-
     NewsItem {
         string url PK
         string title
@@ -197,17 +209,41 @@ erDiagram
         string text
         string symbol FK
     }
+    MarketOverview {
+        string fetched_at PK
+        string warning
+    }
 
-    SentimentSignal ||--o{ StockTwitsPost : "bullish_posts"
-    SentimentSignal ||--o{ StockTwitsPost : "bearish_posts"
-    ConfidenceResult ||--|| FeatureSnapshot : "features"
-    ConfidenceResult ||--o{ TopDriver : "top_drivers"
     MarketOverview ||--o{ MarketQuote : "indices"
     MarketOverview ||--o{ MarketMover : "gainers"
     MarketOverview ||--o{ MarketMover : "losers"
     MarketOverview ||--o{ MarketMover : "actives"
     MarketOverview ||--o{ NewsItem : "news"
     NewsItem }o--|| MarketQuote : "symbol → symbol"
+```
+
+### Cross-Cluster Relationships
+
+```mermaid
+flowchart LR
+    subgraph Sentiment
+        SentimentSignal --> StockTwitsPost
+        SentimentSignal -.->|"summarised as"| SentimentSummary
+    end
+    subgraph Confidence
+        ConfidenceRequest -->|"analyzed into"| ConfidenceResult
+        ConfidenceResult --> FeatureSnapshot
+        ConfidenceResult --> TopDriver
+    end
+    subgraph Market
+        MarketOverview --> MarketQuote
+        MarketOverview --> MarketMover
+        MarketOverview --> NewsItem
+        NewsItem -.->|"symbol"| MarketQuote
+    end
+
+    SentimentSignal -.->|"sent_score feeds"| ConfidenceResult
+    MarketQuote -.->|"SPY/VIX feeds market_regime"| ConfidenceResult
 ```
 
 ---
