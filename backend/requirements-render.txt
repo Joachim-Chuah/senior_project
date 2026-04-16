@@ -1,0 +1,45 @@
+# FastAPI and web framework
+fastapi==0.119.0
+uvicorn[standard]==0.37.0
+python-multipart==0.0.20
+
+# Pydantic v2
+pydantic==2.12.2
+pydantic-settings==2.11.0
+
+# Data processing
+pandas==2.3.3
+numpy==2.3.4
+scipy==1.16.2
+
+# Options data
+yfinance>=1.0
+
+# HTTP requests
+requests==2.32.3
+feedparser>=6.0.0
+
+# Redis (optional)
+redis==5.2.1
+
+# Database
+sqlalchemy==2.0.44
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.2
+httpx==0.28.1
+
+# Development
+python-dotenv==1.0.1
+
+# AI/LLM
+groq>=0.4.0
+tavily-python>=0.3.0
+
+# ML
+scikit-learn>=1.4.0
+
+# torch and transformers intentionally excluded on Render free tier (512MB RAM limit).
+# FinBERTService falls back to "Neutral" labels when transformers is not installed.
+# To enable FinBERT, upgrade to Render's $7/mo plan and use requirements.txt instead.

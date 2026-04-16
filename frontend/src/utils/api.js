@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: '/api', // Use Vite proxy in development
+  baseURL: import.meta.env.VITE_API_URL ?? '/api', // VITE_API_URL set in Vercel; falls back to Vite proxy in dev
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

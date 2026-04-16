@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     # Demo mode — swaps FMP for realistic mock data (no API key needed)
     DEMO_MODE: bool = False
 
+    # Production frontend URL (e.g. https://your-app.vercel.app) — appended to CORS origins
+    FRONTEND_URL: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = True

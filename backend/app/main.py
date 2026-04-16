@@ -38,10 +38,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+# CORS middleware — include FRONTEND_URL (Vercel) if set
+_cors_origins = list(settings.ALLOWED_ORIGINS)
+if settings.FRONTEND_URL:
+    _cors_origins.append(settings.FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
