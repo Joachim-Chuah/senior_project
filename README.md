@@ -4,6 +4,10 @@
 
 The app ships with a **Demo Mode** that runs fully offline — no paid API keys needed. In demo mode, options data is generated using real Black-Scholes math with realistic mock prices, and an interactive Black-Scholes guide walks through the model step by step.
 
+**Live demo:** https://senior-project-murex.vercel.app
+
+> Demo login: username `demo` · password `sentiviz123`
+
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![Node](https://img.shields.io/badge/node-18+-green.svg)
@@ -180,7 +184,7 @@ UI available at `http://localhost:5173`
 
 ## Testing
 
-202 unit tests across 8 test files covering all backend services and API endpoints. Tests run automatically on every push via GitHub Actions.
+218 unit tests across 9 test files covering all backend services and API endpoints. Tests run automatically on every push via GitHub Actions.
 
 ```bash
 cd backend
@@ -194,10 +198,37 @@ pytest -v
 | `test_confidence_service.py` | Confidence scoring, sigmoid, feature vectors, outcome recording, state persistence |
 | `test_fmp_service.py` | Financial Modeling Prep API client — quotes, search, gainers/losers, missing key handling |
 | `test_mock_fmp_service.py` | Demo mode mock data — realistic price generation, gainers/losers, symbol search |
-| `test_stocktwits_service.py` | StockTwits sentiment parsing, signal calculation, bullish/bearish scoring |
+| `test_stocktwits_service.py` | StockTwits sentiment parsing, signal calculation, bullish/bearish scoring, FinBERT fallback |
+| `test_finbert_service.py` | FinBERT label mapping, batch classification, error handling, singleton pattern |
 | `test_rss_service.py` | RSS news feed parsing, date handling, multi-feed aggregation |
 | `test_market_helpers.py` | Trading date logic, market hours, summary cache read/write |
 | `test_api.py` | FastAPI endpoint smoke tests — health check, demo options, invalid tickers |
+
+---
+
+## Deployment
+
+The app is hosted on two platforms:
+
+| Layer | Platform | URL |
+|-------|----------|-----|
+| Frontend | Vercel | https://senior-project-murex.vercel.app |
+| Backend | Render (free tier) | https://senior-project-1tdr.onrender.com |
+
+Config files: `render.yaml` (backend), `frontend/vercel.json` (SPA rewrite rule).
+
+**Environment variables:**
+
+Render:
+- `GROQ_API_KEY`
+- `TAVILY_API_KEY`
+- `FRONTEND_URL` — Vercel URL, added to CORS allowlist
+
+Vercel:
+- `VITE_API_URL` — Render URL + `/api`
+- `VITE_DEMO_MODE` — `true` or `false`
+
+> Render's free tier spins down after 15 minutes of inactivity. The first request after idle takes ~30–50 seconds. Hit the URL once before demoing to warm it up.
 
 ---
 
