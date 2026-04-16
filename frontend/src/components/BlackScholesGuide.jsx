@@ -198,13 +198,13 @@ function Section({ icon: Icon, title, subtitle, children, accent = 'indigo' }) {
     };
     const style = iconStyles[accent] || iconStyles.indigo;
     return (
-        <div className="card p-6 space-y-4">
+        <div className="card p-8 space-y-5">
             <div className="flex items-start gap-3">
                 <div style={{ ...style, padding: '0.5rem', borderRadius: '0.5rem', flexShrink: 0 }}>
                     <Icon size={18} />
                 </div>
                 <div>
-                    <h2 className="text-base font-bold t-primary">{title}</h2>
+                    <h2 className="text-xl font-bold t-primary">{title}</h2>
                     {subtitle && <p className="text-sm t-muted mt-0.5">{subtitle}</p>}
                 </div>
             </div>
@@ -219,8 +219,8 @@ function SliderInput({ label, value, onChange, min, max, step, display, hint }) 
     return (
         <div className="space-y-1.5">
             <div className="flex justify-between items-baseline">
-                <label className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{label}</label>
-                <span className="text-sm font-mono font-bold t-primary">{display ?? value}</span>
+                <label className="text-base font-semibold" style={{ color: 'var(--text)' }}>{label}</label>
+                <span className="text-base font-mono font-bold t-primary">{display ?? value}</span>
             </div>
             <input
                 type="range" min={min} max={max} step={step} value={value}
@@ -245,25 +245,25 @@ function GreekCard({ icon: Icon, name, symbol, value, color, what, interpret, ex
     };
     const accentColor = accentColors[color] || 'var(--text)';
     return (
-        <div className="card p-4 space-y-2" style={{ borderColor: 'var(--border)' }}>
+        <div className="card p-6 space-y-3" style={{ borderColor: 'var(--border)' }}>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2" style={{ color: accentColor }}>
-                    <Icon size={16} />
-                    <span className="font-bold text-sm">{symbol} {name}</span>
+                    <Icon size={18} />
+                    <span className="font-bold text-base">{symbol} {name}</span>
                 </div>
-                <span className="font-mono font-bold text-lg t-primary">{fmt(value, 4)}</span>
+                <span className="font-mono font-bold text-2xl t-primary">{fmt(value, 4)}</span>
             </div>
-            <p className="text-xs t-muted">{what}</p>
+            <p className="text-sm t-muted">{what}</p>
             <button
                 onClick={() => setOpen(o => !o)}
-                className="flex items-center gap-1 text-xs font-semibold transition-opacity hover:opacity-100"
+                className="flex items-center gap-1 text-sm font-semibold transition-opacity hover:opacity-100"
                 style={{ color: accentColor, opacity: 0.7 }}
             >
-                {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                 {open ? 'Hide' : 'How to interpret'}
             </button>
             {open && (
-                <div className="text-xs space-y-1 pt-1" style={{ borderTop: '1px solid var(--border)' }}>
+                <div className="text-sm space-y-1 pt-1" style={{ borderTop: '1px solid var(--border)' }}>
                     <p className="t-muted">{interpret}</p>
                     {example && <p className="italic" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>{example}</p>}
                 </div>
@@ -369,12 +369,12 @@ Moneyness: ${moneyness}`;
     }
 
     return (
-        <div className="px-4 py-6 max-w-7xl mx-auto">
+        <div className="px-8 py-10 max-w-screen-2xl mx-auto">
 
             {/* Sticky summary bar — appears when left panel scrolls out of view on mobile */}
             {showSticky && (
                 <div
-                    className="fixed top-14 left-0 right-0 z-30 px-4 py-2 flex items-center justify-center gap-6 text-xs font-mono lg:hidden"
+                    className="fixed top-16 left-0 right-0 z-30 px-4 py-2 flex items-center justify-center gap-6 text-sm font-mono lg:hidden"
                     style={{
                         background: 'var(--surface)',
                         backdropFilter: 'blur(16px)',
@@ -391,16 +391,16 @@ Moneyness: ${moneyness}`;
                 </div>
             )}
 
-            <div className="lg:flex lg:gap-8 lg:items-start">
+            <div className="lg:flex lg:gap-12 lg:items-start">
 
                 {/* ── Left panel: control panel ─────────────────────────────────── */}
                 <div
                     ref={inputsSectionRef}
-                    className="lg:w-80 xl:w-96 lg:flex-shrink-0 lg:sticky lg:top-14 lg:max-h-[calc(100vh-3.5rem)] lg:overflow-y-auto space-y-5 mb-8 lg:mb-0 lg:pb-8 scrollbar-thin"
+                    className="lg:w-96 xl:w-[480px] lg:flex-shrink-0 lg:sticky lg:top-16 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto space-y-5 mb-8 lg:mb-0 lg:pb-8 scrollbar-thin"
                 >
                     {/* Header */}
                     <div>
-                        <h1 className="text-2xl font-bold gradient-text">Black-Scholes Guide</h1>
+                        <h1 className="text-4xl font-bold gradient-text">Black-Scholes Guide</h1>
                         <p className="text-sm t-muted mt-1">
                             Adjust the inputs — watch the Greeks update in real time.
                         </p>
@@ -412,7 +412,7 @@ Moneyness: ${moneyness}`;
                             <button
                                 key={sym}
                                 onClick={() => setTicker(sym)}
-                                className="px-3 py-1.5 rounded-lg text-sm font-mono font-semibold transition-all"
+                                className="px-5 py-2.5 rounded-lg text-base font-mono font-semibold transition-all"
                                 style={ticker === sym ? {
                                     background: 'var(--accent)',
                                     color: 'var(--accent-text)',
@@ -429,12 +429,12 @@ Moneyness: ${moneyness}`;
 
                     {/* Inputs card */}
                     <div
-                        className="rounded-xl p-5 space-y-5 theme-transition"
+                        className="rounded-xl p-7 space-y-6 theme-transition"
                         style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow)' }}
                     >
                         <div className="flex items-center gap-2 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
                             <Calculator size={15} style={{ color: 'var(--text-muted)' }} />
-                            <span className="text-sm font-semibold t-primary">Model Inputs</span>
+                            <span className="text-base font-semibold t-primary">Model Inputs</span>
                         </div>
                         <SliderInput
                             label="S — Spot Price"
@@ -492,33 +492,33 @@ Moneyness: ${moneyness}`;
                     <div className="grid grid-cols-2 gap-3">
                         <div className="rounded-xl p-4 text-center" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
                             <p className="text-xs font-semibold uppercase tracking-wide mb-1 t-muted">Call</p>
-                            <p className="text-2xl font-bold font-mono t-primary">${fmt(bs.callPrice)}</p>
+                            <p className="text-3xl font-bold font-mono t-primary">${fmt(bs.callPrice)}</p>
                             <p className="text-xs mt-1 t-muted">buy at ${fmt(strike)}</p>
                         </div>
                         <div className="rounded-xl p-4 text-center" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
                             <p className="text-xs font-semibold uppercase tracking-wide mb-1 t-muted">Put</p>
-                            <p className="text-2xl font-bold font-mono t-primary">${fmt(bs.putPrice)}</p>
+                            <p className="text-3xl font-bold font-mono t-primary">${fmt(bs.putPrice)}</p>
                             <p className="text-xs mt-1 t-muted">sell at ${fmt(strike)}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* ── Right panel: analysis ─────────────────────────────────────── */}
-                <div className="flex-1 min-w-0 space-y-6 pb-8">
+                <div className="flex-1 min-w-0 space-y-8 pb-8">
 
                     {/* What is Black-Scholes */}
                     <Section icon={BookOpen} title="What is the Black-Scholes Model?" accent="indigo">
-                        <p className="text-sm t-muted leading-relaxed">
+                        <p className="text-base t-muted leading-relaxed">
                             Black-Scholes is a mathematical model for pricing options contracts. Published in 1973 by Fischer Black and Myron Scholes,
                             it tells you the <strong className="t-primary">theoretical fair value</strong> of a call or put option given five inputs:
                             the current stock price, the strike price, time until expiration, the risk-free interest rate, and the stock's volatility.
                         </p>
-                        <p className="text-sm t-muted leading-relaxed">
+                        <p className="text-base t-muted leading-relaxed">
                             The model assumes the stock moves in a <em>log-normal random walk</em> — small, continuous price changes with a known volatility.
                             In practice, markets aren't perfectly log-normal (crashes happen, vol changes), but Black-Scholes remains the industry baseline
                             that every options trader learns first.
                         </p>
-                        <div className="p-3 rounded-lg font-mono text-xs t-muted text-center" style={{ background: 'var(--surface-2)' }}>
+                        <div className="p-4 rounded-lg font-mono text-sm t-muted text-center" style={{ background: 'var(--surface-2)' }}>
                             C = S·N(d₁) − K·e<sup>−rT</sup>·N(d₂)&nbsp;&nbsp;&nbsp;
                             d₁ = [ln(S/K) + (r + σ²/2)·T] / (σ·√T)&nbsp;&nbsp;&nbsp;
                             d₂ = d₁ − σ·√T
@@ -557,7 +557,7 @@ Moneyness: ${moneyness}`;
 
                     {/* d1 / d2 */}
                     <Section icon={BookOpen} title="d₁ and d₂ — What the formula is really doing" accent="indigo">
-                        <div className="grid sm:grid-cols-2 gap-4 text-sm t-muted">
+                        <div className="grid sm:grid-cols-2 gap-4 text-base t-muted">
                             <div className="space-y-2">
                                 <p className="font-mono font-bold t-primary">d₁ = {fmt(bs.d1, 4)}</p>
                                 <p>d₁ captures how far the stock price is from the strike, adjusted for drift and volatility over time.

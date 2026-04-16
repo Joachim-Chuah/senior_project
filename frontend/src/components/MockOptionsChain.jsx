@@ -46,7 +46,7 @@ function Th({ children, title, align = 'right' }) {
     return (
         <th
             title={title}
-            className={`px-3 py-2.5 text-${align} text-xs font-semibold uppercase tracking-wide cursor-help`}
+            className={`px-4 py-4 text-${align} text-sm font-semibold uppercase tracking-wide cursor-help`}
             style={{ color: 'var(--text-muted)' }}
         >
             {children}
@@ -77,22 +77,22 @@ export default function MockOptionsChain() {
     useEffect(() => { load(ticker, days); }, [ticker, days]);
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+        <div className="max-w-screen-2xl mx-auto px-8 py-10 space-y-8">
 
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold" style={{ color: 'var(--text)', letterSpacing: '-0.02em' }}>
+                    <h1 className="text-4xl font-bold" style={{ color: 'var(--text)', letterSpacing: '-0.02em' }}>
                         Options Chain
                     </h1>
-                    <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                    <p className="text-base mt-1.5" style={{ color: 'var(--text-muted)' }}>
                         Black-Scholes pricing · Demo mode
                     </p>
                 </div>
                 <button
                     onClick={() => load(ticker, days)}
                     disabled={loading}
-                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-all duration-200"
+                    className="flex items-center gap-2 px-4 py-2.5 text-base rounded-xl transition-all duration-200"
                     style={{
                         background: 'var(--surface)',
                         border: '1px solid var(--border)',
@@ -107,12 +107,12 @@ export default function MockOptionsChain() {
             </div>
 
             {/* Ticker selector */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
                 {MAG7.map(sym => (
                     <button
                         key={sym}
                         onClick={() => setTicker(sym)}
-                        className="px-4 py-1.5 rounded-lg text-sm font-mono font-semibold transition-all duration-200"
+                        className="px-5 py-2.5 rounded-lg text-base font-mono font-semibold transition-all duration-200"
                         style={ticker === sym ? {
                             backgroundColor: 'var(--accent)',
                             color: 'var(--accent-text)',
@@ -131,12 +131,12 @@ export default function MockOptionsChain() {
             </div>
 
             {/* Expiration tabs */}
-            <div className="flex gap-2">
+            <div className="flex gap-3">
                 {EXPIRATIONS.map(exp => (
                     <button
                         key={exp.days}
                         onClick={() => setDays(exp.days)}
-                        className="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200"
+                        className="px-5 py-2.5 rounded-lg text-base font-semibold transition-all duration-200"
                         style={days === exp.days ? {
                             backgroundColor: 'var(--accent)',
                             color: 'var(--accent-text)',
@@ -157,7 +157,7 @@ export default function MockOptionsChain() {
             {/* Meta bar */}
             {data && (
                 <div
-                    className="flex flex-wrap gap-6 px-4 py-3 rounded-xl text-sm theme-transition"
+                    className="flex flex-wrap gap-8 px-6 py-4 rounded-xl text-base theme-transition"
                     style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 >
                     {[
@@ -202,23 +202,23 @@ export default function MockOptionsChain() {
                     className="overflow-x-auto rounded-2xl"
                     style={{ border: '1px solid var(--border)' }}
                 >
-                    <table className="w-full text-sm">
+                    <table className="w-full text-base">
                         <thead>
                             <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' }}>
                                 <Th title={GREEK_LABELS.vega}>Vega</Th>
                                 <Th title={GREEK_LABELS.theta}>Theta</Th>
                                 <Th title={GREEK_LABELS.gamma}>Gamma</Th>
                                 <Th title={GREEK_LABELS.delta}>Δ Delta</Th>
-                                <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                                <th className="px-4 py-4 text-right text-sm font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
                                     Call
                                 </th>
                                 <th
-                                    className="px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wide"
+                                    className="px-5 py-4 text-center text-sm font-semibold uppercase tracking-wide"
                                     style={{ color: 'var(--text)', background: 'var(--surface-2)' }}
                                 >
                                     Strike
                                 </th>
-                                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-red-500">
+                                <th className="px-4 py-4 text-left text-sm font-semibold uppercase tracking-wide text-red-500">
                                     Put
                                 </th>
                                 <Th title={GREEK_LABELS.delta}>Δ Delta</Th>
@@ -244,23 +244,23 @@ export default function MockOptionsChain() {
                                         onMouseEnter={e => { if (!isATM) e.currentTarget.style.background = 'var(--surface-2)'; }}
                                         onMouseLeave={e => { if (!isATM) e.currentTarget.style.background = ''; }}
                                     >
-                                        <td className="px-3 py-2 text-right font-mono text-xs" style={{ color: 'var(--text)' }}>{fmt(row.vega, 4)}</td>
-                                        <td className={`px-3 py-2 text-right font-mono text-xs ${thetaColor(row.theta_call)}`} style={!thetaColor(row.theta_call) ? { color: 'var(--text)' } : {}}>{fmt(row.theta_call, 4)}</td>
-                                        <td className="px-3 py-2 text-right font-mono text-xs" style={{ color: 'var(--text)' }}>{fmt(row.gamma, 6)}</td>
-                                        <td className={`px-3 py-2 text-right font-mono text-xs ${deltaColor(row.call_delta)}`} style={!deltaColor(row.call_delta) ? { color: 'var(--text)' } : {}}>{fmt(row.call_delta, 4)}</td>
-                                        <td className="px-3 py-2 text-right font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">${fmt(row.call_price)}</td>
+                                        <td className="px-4 py-3.5 text-right font-mono text-sm" style={{ color: 'var(--text)' }}>{fmt(row.vega, 4)}</td>
+                                        <td className={`px-4 py-3.5 text-right font-mono text-sm ${thetaColor(row.theta_call)}`} style={!thetaColor(row.theta_call) ? { color: 'var(--text)' } : {}}>{fmt(row.theta_call, 4)}</td>
+                                        <td className="px-4 py-3.5 text-right font-mono text-sm" style={{ color: 'var(--text)' }}>{fmt(row.gamma, 6)}</td>
+                                        <td className={`px-4 py-3.5 text-right font-mono text-sm ${deltaColor(row.call_delta)}`} style={!deltaColor(row.call_delta) ? { color: 'var(--text)' } : {}}>{fmt(row.call_delta, 4)}</td>
+                                        <td className="px-4 py-3.5 text-right font-mono text-sm font-semibold text-emerald-600 dark:text-emerald-400">${fmt(row.call_price)}</td>
                                         <td
-                                            className="px-4 py-2 text-center font-mono text-xs font-bold"
+                                            className="px-5 py-3.5 text-center font-mono text-sm font-bold"
                                             style={{ background: 'var(--surface-2)', color: isATM ? 'var(--accent)' : 'var(--text)' }}
                                         >
                                             ${fmt(row.strike)}
-                                            {isATM && <span className="ml-1 text-xs opacity-60">ATM</span>}
+                                            {isATM && <span className="ml-1.5 text-xs opacity-60">ATM</span>}
                                         </td>
-                                        <td className="px-3 py-2 text-left font-mono text-xs font-semibold text-red-500">${fmt(row.put_price)}</td>
-                                        <td className={`px-3 py-2 text-right font-mono text-xs ${deltaColor(row.put_delta)}`} style={!deltaColor(row.put_delta) ? { color: 'var(--text)' } : {}}>{fmt(row.put_delta, 4)}</td>
-                                        <td className="px-3 py-2 text-right font-mono text-xs" style={{ color: 'var(--text)' }}>{fmt(row.gamma, 6)}</td>
-                                        <td className={`px-3 py-2 text-right font-mono text-xs ${thetaColor(row.theta_put)}`} style={!thetaColor(row.theta_put) ? { color: 'var(--text)' } : {}}>{fmt(row.theta_put, 4)}</td>
-                                        <td className="px-3 py-2 text-right font-mono text-xs" style={{ color: 'var(--text)' }}>{fmt(row.vega, 4)}</td>
+                                        <td className="px-4 py-3.5 text-left font-mono text-sm font-semibold text-red-500">${fmt(row.put_price)}</td>
+                                        <td className={`px-4 py-3.5 text-right font-mono text-sm ${deltaColor(row.put_delta)}`} style={!deltaColor(row.put_delta) ? { color: 'var(--text)' } : {}}>{fmt(row.put_delta, 4)}</td>
+                                        <td className="px-4 py-3.5 text-right font-mono text-sm" style={{ color: 'var(--text)' }}>{fmt(row.gamma, 6)}</td>
+                                        <td className={`px-4 py-3.5 text-right font-mono text-sm ${thetaColor(row.theta_put)}`} style={!thetaColor(row.theta_put) ? { color: 'var(--text)' } : {}}>{fmt(row.theta_put, 4)}</td>
+                                        <td className="px-4 py-3.5 text-right font-mono text-sm" style={{ color: 'var(--text)' }}>{fmt(row.vega, 4)}</td>
                                     </tr>
                                 );
                             })}
@@ -269,7 +269,7 @@ export default function MockOptionsChain() {
                 </div>
             )}
 
-            <p className="text-xs text-center" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
+            <p className="text-sm text-center" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
                 Hover column headers for Greek definitions · ATM = at-the-money · ITM = in-the-money · OTM = out-of-the-money
             </p>
         </div>
