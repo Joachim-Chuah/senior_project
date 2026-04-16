@@ -534,7 +534,7 @@ const OverviewPanel = ({ onSelectTicker, navigateTo, watchlist = [], removeFromW
     useEffect(() => { fetchOverview(); }, [fetchOverview]);
 
     return (
-        <div className="p-6 lg:p-8 space-y-6">
+        <div className="p-8 lg:p-12 space-y-8">
             <header
                 className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6"
                 style={{ borderBottom: '1px solid var(--border)' }}
@@ -623,13 +623,13 @@ const OverviewPanel = ({ onSelectTicker, navigateTo, watchlist = [], removeFromW
             })()}
 
             {overviewLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-5">
                     {Array.from({ length: 8 }).map((_, i) => (
                         <div key={i} className="h-28 rounded-xl skeleton" />
                     ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-5">
                     {overview.map((item) => (
                         <SentimentCard key={item.ticker} item={item} onClick={onSelectTicker} />
                     ))}
@@ -675,7 +675,7 @@ const DetailPanel = ({ ticker, onBack, navigateTo, watchlist = [], addToWatchlis
     }, [fetchData]);
 
     return (
-        <div className="p-6 lg:p-8 space-y-6">
+        <div className="p-8 lg:p-12 space-y-8">
             <header
                 className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6"
                 style={{ borderBottom: '1px solid var(--border)' }}

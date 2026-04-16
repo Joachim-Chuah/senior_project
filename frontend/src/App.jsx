@@ -247,7 +247,7 @@ function App() {
         toggleDarkMode={toggleDarkMode}
         onLogoClick={() => setLaunched(false)}
       />
-      <main className="relative z-10 flex-1 mt-14">
+      <main className="relative z-10 flex-1 mt-16">
         <div key={activeTab} className="tab-content">
           {renderContent()}
         </div>

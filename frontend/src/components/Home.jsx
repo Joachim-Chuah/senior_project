@@ -486,7 +486,7 @@ export default function Home({ watchlist = [], addToWatchlist, removeFromWatchli
     : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
+    <div className="max-w-screen-2xl mx-auto px-6 py-8 space-y-10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

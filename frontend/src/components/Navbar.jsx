@@ -26,7 +26,7 @@ const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick
 
     return (
         <nav
-            className="fixed top-0 left-0 right-0 h-14 z-50 flex items-center px-6 gap-6"
+            className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center px-8 gap-6"
             style={{
                 backgroundColor: scrolled ? 'var(--bg)' : 'transparent',
                 borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',

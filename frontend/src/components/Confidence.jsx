@@ -541,7 +541,7 @@ const Confidence = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
     };
 
     return (
-        <div className="p-6 lg:p-8 min-h-screen theme-transition" style={{ backgroundColor: 'var(--bg)' }}>
+        <div className="p-8 lg:p-12 min-h-screen theme-transition" style={{ backgroundColor: 'var(--bg)' }}>
             {/* Header */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5" style={{ borderBottom: '1px solid var(--border)' }}>
                 <div>
