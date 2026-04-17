@@ -21,7 +21,11 @@ class StockTwitsService:
     def __init__(self, finbert=None):
         self.session = requests.Session()
         self.session.headers.update({
-            'User-Agent': 'Sentiviz/1.0'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://stocktwits.com/',
+            'Origin': 'https://stocktwits.com',
         })
         self._finbert = finbert if finbert is not None else FinBERTService()
 
