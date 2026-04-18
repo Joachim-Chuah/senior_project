@@ -10,15 +10,28 @@ import BlackScholesGuide from './components/BlackScholesGuide';
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
+const TAB_ORDER = DEMO_MODE
+  ? ['home', 'sentiment', 'dashboard', 'confidence', 'ai']
+  : ['home', 'dashboard', 'confidence', 'ai'];
+
 function App() {
   const [launched, setLaunched] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [crossTabTicker, setCrossTabTicker] = useState(null);
+  const [scrollY, setScrollY] = useState(0);
+
+  const sectionRefs = useRef({});
+  const scrollContainerRef = useRef(null);
+  const scrollTopRef = useRef(0);
 
   function goToTab(tabId, ticker = null) {
     setActiveTab(tabId);
     if (ticker) setCrossTabTicker(ticker);
     window.history.pushState({ launched: true, tab: tabId }, '');
+    const el = sectionRefs.current[tabId];
+    if (el && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: el.offsetTop, behavior: 'smooth' });
+    }
   }
 
   function navigateTo(tabId, ticker = null) {
@@ -29,7 +42,6 @@ function App() {
     setCrossTabTicker(null);
   }
 
-  // Browser back/forward support
   useEffect(() => {
     const handlePop = (e) => {
       const state = e.state;
@@ -37,8 +49,13 @@ function App() {
         setLaunched(false);
         setActiveTab('home');
       } else {
+        const tab = state.tab || 'home';
         setLaunched(true);
-        setActiveTab(state.tab || 'home');
+        setActiveTab(tab);
+        const el = sectionRefs.current[tab];
+        if (el && scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTo({ top: el.offsetTop, behavior: 'smooth' });
+        }
       }
     };
     window.addEventListener('popstate', handlePop);
@@ -80,8 +97,6 @@ function App() {
 
   const toggleDarkMode = () => setDarkMode(prev => !prev);
 
-  const [scrollY, setScrollY] = useState(0);
-
   // Blob + spotlight refs for direct DOM manipulation (no re-render on mousemove)
   const blob1Ref     = useRef(null);
   const blob2Ref     = useRef(null);
@@ -91,13 +106,20 @@ function App() {
   const darkModeRef  = useRef(darkMode);
   const rafRef       = useRef(null);
 
+  // Scroll listener on the snap container
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+    if (!launched) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const onScroll = () => {
+      const top = container.scrollTop;
+      scrollTopRef.current = top;
+      setScrollY(top);
+    };
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => container.removeEventListener('scroll', onScroll);
+  }, [launched]);
 
-  // Keep darkModeRef in sync so the RAF callback can read it without a closure
   useEffect(() => { darkModeRef.current = darkMode; }, [darkMode]);
 
   useEffect(() => {
@@ -112,7 +134,7 @@ function App() {
         rafRef.current = requestAnimationFrame(() => {
           rafRef.current = null;
           const { x, y, rawX, rawY } = mouseRef.current;
-          const sy = window.scrollY;
+          const sy = scrollTopRef.current;
 
           if (blob1Ref.current)
             blob1Ref.current.style.transform = `translate(${x * -120}px, calc(${y * -120}px + ${sy * -0.22}px))`;
@@ -138,20 +160,64 @@ function App() {
     };
   }, []);
 
-  const renderContent = () => {
-    switch (activeTab) {
+  // IntersectionObserver — sync active tab + fade+scale animation
+  useEffect(() => {
+    if (!launched) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const observers = [];
+
+    TAB_ORDER.forEach((tab, i) => {
+      const el = sectionRefs.current[tab];
+      if (!el) return;
+
+      // Sync active tab when majority visible
+      const syncObs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setActiveTab(tab);
+            window.history.replaceState({ launched: true, tab }, '');
+          }
+        },
+        { root: container, threshold: 0.6 }
+      );
+      syncObs.observe(el);
+      observers.push(syncObs);
+
+      // Fade+scale: show when just entering view
+      const animObs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) el.classList.add('snap-visible');
+        },
+        { root: container, threshold: 0.05 }
+      );
+      animObs.observe(el);
+      observers.push(animObs);
+
+      // First section is immediately visible
+      if (i === 0) requestAnimationFrame(() => el.classList.add('snap-visible'));
+    });
+
+    return () => observers.forEach(o => o.disconnect());
+  }, [launched]);
+
+  const renderSection = (tab) => {
+    switch (tab) {
       case 'home':
         return <Home watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} navigateTo={navigateTo} />;
       case 'dashboard':
-        return DEMO_MODE ? <MockOptionsChain /> : <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} />;
-      case 'confidence':
-        return DEMO_MODE ? <BlackScholesGuide /> : <Confidence navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
+        return DEMO_MODE
+          ? <MockOptionsChain />
+          : <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} />;
       case 'sentiment':
         return <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} />;
+      case 'confidence':
+        return DEMO_MODE ? <BlackScholesGuide /> : <Confidence navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
       case 'ai':
         return <AIAnalysis navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
       default:
-        return <Home />;
+        return null;
     }
   };
 
@@ -169,8 +235,10 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen theme-transition" style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
-
+    <div
+      className="theme-transition"
+      style={{ height: '100vh', overflow: 'hidden', backgroundColor: 'var(--bg)', color: 'var(--text)' }}
+    >
       {/* ── Cursor spotlight ── */}
       <div ref={spotlightRef} className="fixed inset-0 pointer-events-none" style={{ zIndex: 1 }} />
 
@@ -179,12 +247,10 @@ function App() {
 
       {/* ── Background effects ── */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Dot grid */}
         <div className="absolute inset-0" style={{
           backgroundImage: 'radial-gradient(circle, var(--dot) 1px, transparent 1px)',
           backgroundSize: '28px 28px',
         }} />
-        {/* Blob — top right (outer = CSS drift, inner = mouse/scroll) */}
         <div className="blob-1 absolute" style={{
           top:   darkMode ? '-300px' : '-120px',
           right: darkMode ? '-300px' : '-120px',
@@ -202,7 +268,6 @@ function App() {
             willChange: 'transform',
           }} />
         </div>
-        {/* Blob — bottom left (outer = CSS drift, inner = mouse/scroll) */}
         <div className="blob-2 absolute" style={{
           bottom: '-300px', left: '-300px',
           width:  darkMode ? '1000px' : '900px',
@@ -219,7 +284,6 @@ function App() {
             willChange: 'transform',
           }} />
         </div>
-        {/* Blob — center fill (outer = CSS drift, inner = mouse/scroll) */}
         <div className="blob-3 absolute" style={{
           top: '40%', left: '50%',
           width:  darkMode ? '900px' : '700px',
@@ -246,12 +310,36 @@ function App() {
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
         onLogoClick={() => setLaunched(false)}
+        navScrolled={scrollY > 10}
       />
-      <main className="relative z-10 flex-1 mt-16">
-        <div key={activeTab} className="tab-content">
-          {renderContent()}
-        </div>
-      </main>
+
+      {/* ── Snap scroll container ── */}
+      <div
+        ref={scrollContainerRef}
+        className="relative z-10"
+        style={{
+          height: '100vh',
+          overflowY: 'scroll',
+          scrollSnapType: 'y mandatory',
+        }}
+      >
+        {TAB_ORDER.map(tab => (
+          <div
+            key={tab}
+            ref={el => { sectionRefs.current[tab] = el; }}
+            className="snap-section"
+            style={{
+              height: '100vh',
+              scrollSnapAlign: 'start',
+              scrollSnapStop: 'always',
+              overflowY: 'auto',
+              paddingTop: '4rem',
+            }}
+          >
+            {renderSection(tab)}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

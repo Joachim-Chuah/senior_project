@@ -3,14 +3,16 @@ import { LayoutDashboard, BrainCircuit, Sparkles, BarChart2, Sun, Moon, Home, Li
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
-const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick }) => {
+const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick, navScrolled }) => {
     const [scrolled, setScrolled] = useState(false);
+    const isScrolled = navScrolled !== undefined ? navScrolled : scrolled;
 
     useEffect(() => {
+        if (navScrolled !== undefined) return;
         const onScroll = () => setScrolled(window.scrollY > 10);
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
-    }, []);
+    }, [navScrolled]);
     const navItems = DEMO_MODE ? [
         { id: 'home',       label: 'Home',          icon: Home },
         { id: 'sentiment',  label: 'Sentiment',     icon: LayoutDashboard },
@@ -28,9 +30,9 @@ const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick
         <nav
             className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center px-8 gap-6"
             style={{
-                backgroundColor: scrolled ? 'var(--bg)' : 'transparent',
-                borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
-                backdropFilter: scrolled ? 'blur(12px)' : 'none',
+                backgroundColor: isScrolled ? 'var(--bg)' : 'transparent',
+                borderBottom: isScrolled ? '1px solid var(--border)' : '1px solid transparent',
+                backdropFilter: isScrolled ? 'blur(12px)' : 'none',
                 transition: 'background-color 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease',
             }}
         >

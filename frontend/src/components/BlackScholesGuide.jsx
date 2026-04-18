@@ -396,7 +396,7 @@ Moneyness: ${moneyness}`;
                 {/* ── Left panel: control panel ─────────────────────────────────── */}
                 <div
                     ref={inputsSectionRef}
-                    className="lg:w-96 xl:w-[480px] lg:flex-shrink-0 lg:sticky lg:top-16 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto space-y-5 mb-8 lg:mb-0 lg:pb-8 scrollbar-thin"
+                    className="lg:w-96 xl:w-[480px] lg:flex-shrink-0 lg:sticky lg:top-16 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto space-y-5 mb-8 lg:mb-0 lg:pb-8 scrollbar-thin anim-slide-left"
                 >
                     {/* Header */}
                     <div>
@@ -504,7 +504,7 @@ Moneyness: ${moneyness}`;
                 </div>
 
                 {/* ── Right panel: analysis ─────────────────────────────────────── */}
-                <div className="flex-1 min-w-0 space-y-8 pb-8">
+                <div className="flex-1 min-w-0 space-y-8 pb-8 anim-slide-right">
 
                     {/* What is Black-Scholes */}
                     <Section icon={BookOpen} title="What is the Black-Scholes Model?" accent="indigo">

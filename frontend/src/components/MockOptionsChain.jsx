@@ -77,7 +77,7 @@ export default function MockOptionsChain() {
     useEffect(() => { load(ticker, days); }, [ticker, days]);
 
     return (
-        <div className="max-w-screen-2xl mx-auto px-8 py-10 space-y-8">
+        <div className="max-w-screen-2xl mx-auto px-8 py-10 space-y-8 anim-fade-in">
 
             {/* Header */}
             <div className="flex items-center justify-between">

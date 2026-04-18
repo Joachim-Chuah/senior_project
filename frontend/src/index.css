@@ -103,6 +103,42 @@ body {
     animation: fadeSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
+  /* ─── Snap scroll sections ──────────────────────────────────────────────── */
+  .snap-section {
+    opacity: 0;
+    transform: scale(0.97);
+    transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .snap-section.snap-visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* ─── Page content entrance animations ─────────────────────────────────── */
+  .anim-fade-in {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  .snap-section.snap-visible .anim-fade-in {
+    animation: contentFadeUp 0.7s 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .anim-slide-left {
+    opacity: 0;
+    transform: translateX(-80px) scale(0.96);
+  }
+  .snap-section.snap-visible .anim-slide-left {
+    animation: contentSlideLeft 0.75s 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .anim-slide-right {
+    opacity: 0;
+    transform: translateX(80px) scale(0.96);
+  }
+  .snap-section.snap-visible .anim-slide-right {
+    animation: contentSlideRight 0.75s 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
   /* ─── Glass (dark mode cards) ───────────────────────────────────────────── */
   .glass {
     background: var(--surface);
@@ -218,6 +254,21 @@ body {
 @keyframes fadeSlideIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes contentFadeUp {
+  from { opacity: 0; transform: translateY(52px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes contentSlideLeft {
+  from { opacity: 0; transform: translateX(-80px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes contentSlideRight {
+  from { opacity: 0; transform: translateX(80px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
 }
 
 @keyframes blobDrift1 {
