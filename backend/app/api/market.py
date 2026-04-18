@@ -179,6 +179,23 @@ async def get_market_overview() -> MarketOverview:
     return result
 
 
+@router.get("/sparkline/{ticker}")
+async def get_sparkline(ticker: str):
+    """30-day daily close prices for sparkline charts."""
+    import asyncio
+    import yfinance as yf
+
+    def fetch():
+        hist = yf.Ticker(ticker.upper()).history(period="30d")
+        if hist.empty:
+            return []
+        return [round(float(p), 2) for p in hist["Close"].tolist()]
+
+    loop = asyncio.get_event_loop()
+    prices = await loop.run_in_executor(None, fetch)
+    return {"ticker": ticker.upper(), "prices": prices}
+
+
 @router.get("/summary")
 async def get_market_summary():
     """

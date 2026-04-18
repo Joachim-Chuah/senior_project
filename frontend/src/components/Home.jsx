@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, Sparkles, Newspaper, Plus, X, Star } from 'lucide-react';
 import api from '../utils/api';
+import Sparkline from './Sparkline';
 import { getLogoUrl, tickerColor, formatPct, formatPrice, formatVolume, timeAgo } from '../utils/marketHelpers';
 import { useCountUp } from '../utils/useCountUp';
 
@@ -54,18 +55,25 @@ function stockLink(ticker) {
 // ─── Indices strip ────────────────────────────────────────────────────────────
 
 function IndicesStrip({ indices }) {
+  const [sparklines, setSparklines] = useState({});
+
+  useEffect(() => {
+    indices.forEach(({ symbol }) => {
+      api.get(`/market/sparkline/${symbol}`)
+        .then(res => setSparklines(prev => ({ ...prev, [symbol]: res.data.prices })))
+        .catch(() => {});
+    });
+  }, [indices.map(q => q.symbol).join(',')]);
+
   return (
     <div
       className="w-full overflow-hidden theme-transition"
-      style={{
-        border: '1px solid var(--border)',
-        borderRadius: '1rem',
-        background: 'var(--surface-2)',
-      }}
+      style={{ border: '1px solid var(--border)', borderRadius: '1rem', background: 'var(--surface-2)' }}
     >
       <div className="flex divide-x" style={{ '--tw-divide-opacity': 1 }}>
         {indices.map((quote, i) => {
           const up = quote.changesPercentage >= 0;
+          const prices = sparklines[quote.symbol];
           return (
             <a
               key={quote.symbol}
@@ -92,11 +100,11 @@ function IndicesStrip({ indices }) {
               <div className="text-lg font-bold t-primary font-mono leading-none">
                 <AnimatedPrice value={quote.price} />
               </div>
-              <div
-                className="text-xs font-mono"
-                style={{ color: up ? '#16a34a' : '#dc2626' }}
-              >
-                <AnimatedChange value={quote.change} up={up} />
+              <div className="flex items-end justify-between gap-2 mt-1">
+                <div className="text-xs font-mono" style={{ color: up ? '#16a34a' : '#dc2626' }}>
+                  <AnimatedChange value={quote.change} up={up} />
+                </div>
+                {prices && <Sparkline prices={prices} width={72} height={28} positive={up} />}
               </div>
             </a>
           );

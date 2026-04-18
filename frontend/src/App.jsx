@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
+import WaveBackground from './components/WaveBackground';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
 import Confidence from './components/Confidence';
@@ -13,6 +14,47 @@ const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 const TAB_ORDER = DEMO_MODE
   ? ['home', 'sentiment', 'dashboard', 'confidence', 'ai']
   : ['home', 'dashboard', 'confidence', 'ai'];
+
+const TAB_LABELS = {
+  home: 'Home',
+  dashboard: DEMO_MODE ? 'Options Chain' : 'Dashboard',
+  sentiment: 'Sentiment',
+  confidence: DEMO_MODE ? 'B-S Guide' : 'Confidence',
+  ai: 'AI Analysis',
+};
+
+function ScrollDots({ tabs, activeTab, onNavigate }) {
+  return (
+    <div className="fixed right-5 top-1/2 -translate-y-1/2 z-50 flex flex-col items-end gap-3.5 hidden lg:flex">
+      {tabs.map(tab => {
+        const isActive = tab === activeTab;
+        return (
+          <button
+            key={tab}
+            onClick={() => onNavigate(tab)}
+            className="group flex items-center gap-2.5 cursor-pointer"
+          >
+            <span
+              className="text-xs font-medium transition-all duration-200 opacity-0 group-hover:opacity-100 whitespace-nowrap"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              {TAB_LABELS[tab]}
+            </span>
+            <div
+              className="rounded-full transition-all duration-300 flex-shrink-0"
+              style={{
+                width: isActive ? 10 : 5,
+                height: isActive ? 10 : 5,
+                background: isActive ? 'var(--accent)' : 'var(--border-hover)',
+                boxShadow: isActive ? '0 0 10px rgba(99,70,229,0.7)' : 'none',
+              }}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function App() {
   const [launched, setLaunched] = useState(false);
@@ -247,10 +289,7 @@ function App() {
 
       {/* ── Background effects ── */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(circle, var(--dot) 1px, transparent 1px)',
-          backgroundSize: '28px 28px',
-        }} />
+        <WaveBackground darkMode={darkMode} />
         <div className="blob-1 absolute" style={{
           top:   darkMode ? '-300px' : '-120px',
           right: darkMode ? '-300px' : '-120px',
@@ -312,6 +351,8 @@ function App() {
         onLogoClick={() => setLaunched(false)}
         navScrolled={scrollY > 10}
       />
+
+      <ScrollDots tabs={TAB_ORDER} activeTab={activeTab} onNavigate={goToTab} />
 
       {/* ── Snap scroll container ── */}
       <div

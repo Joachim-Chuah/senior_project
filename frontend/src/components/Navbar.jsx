@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, BrainCircuit, Sparkles, BarChart2, Sun, Moon, Home, LineChart, BookOpen } from 'lucide-react';
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
@@ -13,6 +13,7 @@ const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
     }, [navScrolled]);
+
     const navItems = DEMO_MODE ? [
         { id: 'home',       label: 'Home',          icon: Home },
         { id: 'sentiment',  label: 'Sentiment',     icon: LayoutDashboard },
@@ -25,6 +26,24 @@ const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick
         { id: 'confidence', label: 'Confidence',    icon: BrainCircuit },
         { id: 'ai',         label: 'AI Analysis',   icon: Sparkles },
     ];
+
+    // Animated pill
+    const navContainerRef = useRef(null);
+    const buttonRefs = useRef({});
+    const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0 });
+
+    useEffect(() => {
+        const el = buttonRefs.current[activeTab];
+        const container = navContainerRef.current;
+        if (!el || !container) return;
+        const containerRect = container.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+        setPillStyle({
+            left: elRect.left - containerRect.left,
+            width: elRect.width,
+            opacity: 1,
+        });
+    }, [activeTab]);
 
     return (
         <nav
@@ -53,39 +72,38 @@ const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick
             </button>
 
             {/* Nav items — absolute center */}
-            <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5">
-                {navItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.id;
-                    return (
-                        <button
-                            key={item.id}
-                            onClick={() => setActiveTab(item.id)}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
-                            style={isActive ? {
-                                backgroundColor: 'var(--accent)',
-                                color: 'var(--accent-text)',
-                            } : {
-                                color: 'var(--text-muted)',
-                            }}
-                            onMouseEnter={e => {
-                                if (!isActive) {
-                                    e.currentTarget.style.backgroundColor = 'var(--surface-2)';
-                                    e.currentTarget.style.color = 'var(--text)';
-                                }
-                            }}
-                            onMouseLeave={e => {
-                                if (!isActive) {
-                                    e.currentTarget.style.backgroundColor = '';
-                                    e.currentTarget.style.color = 'var(--text-muted)';
-                                }
-                            }}
-                        >
-                            <Icon size={14} className="flex-shrink-0" />
-                            {item.label}
-                        </button>
-                    );
-                })}
+            <div className="absolute left-1/2 -translate-x-1/2">
+                <div ref={navContainerRef} className="relative flex items-center gap-0.5 p-1 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                    {/* Sliding pill */}
+                    <div
+                        className="absolute top-1 bottom-1 rounded-lg pointer-events-none"
+                        style={{
+                            left: pillStyle.left,
+                            width: pillStyle.width,
+                            backgroundColor: 'var(--accent)',
+                            transition: 'left 0.3s cubic-bezier(0.34,1.56,0.64,1), width 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+                            opacity: pillStyle.opacity,
+                        }}
+                    />
+                    {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = activeTab === item.id;
+                        return (
+                            <button
+                                key={item.id}
+                                ref={el => { buttonRefs.current[item.id] = el; }}
+                                onClick={() => setActiveTab(item.id)}
+                                className="relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 z-10"
+                                style={{ color: isActive ? 'var(--accent-text)' : 'var(--text-muted)' }}
+                                onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'var(--text)'; }}
+                                onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-muted)'; }}
+                            >
+                                <Icon size={14} className="flex-shrink-0" />
+                                {item.label}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Dark mode toggle — right */}

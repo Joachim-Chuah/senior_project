@@ -5,6 +5,7 @@ const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 import api from '../utils/api';
 import { getErrorMessage } from '../utils/errorHandler';
 import TickerSearch from './TickerSearch';
+import { SkeletonCard } from './Skeleton';
 
 // ─── Signal config ────────────────────────────────────────────────────────────
 
@@ -625,7 +626,7 @@ const OverviewPanel = ({ onSelectTicker, navigateTo, watchlist = [], removeFromW
             {overviewLoading ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-5">
                     {Array.from({ length: 8 }).map((_, i) => (
-                        <div key={i} className="h-28 rounded-xl skeleton" />
+                        <SkeletonCard key={i} />
                     ))}
                 </div>
             ) : (
