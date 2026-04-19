@@ -136,6 +136,18 @@ class StockTwitsService:
             avatar_url=user.get('avatar_url_ssl')
         )
 
+    def get_trending_tickers(self, limit: int = 10) -> List[str]:
+        """Fetch the most discussed tickers on StockTwits right now."""
+        try:
+            url = f"{STOCKTWITS_API_BASE}/trending/symbols.json"
+            response = self.session.get(url, timeout=8)
+            response.raise_for_status()
+            symbols = response.json().get("symbols", [])
+            return [s["symbol"] for s in symbols[:limit] if s.get("symbol")]
+        except Exception as e:
+            logger.warning(f"Failed to fetch trending tickers: {e}")
+            return []
+
     def _empty_signal(self, ticker: str, error: Optional[str] = None) -> SentimentSignal:
         """Return an empty signal when no data available"""
         return SentimentSignal(

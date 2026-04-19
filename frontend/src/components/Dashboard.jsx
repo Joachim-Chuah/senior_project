@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { TrendingUp, TrendingDown, Minus, AlertCircle, MessageCircle, Users, RefreshCw, ArrowLeft, Newspaper, BrainCircuit, Sparkles, Star, StarOff, X, Info, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, AlertCircle, MessageCircle, Users, RefreshCw, ArrowLeft, Newspaper, BrainCircuit, Sparkles, Star, StarOff, X, Info, ChevronRight, ChevronDown } from 'lucide-react';
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 import api from '../utils/api';
@@ -455,9 +455,31 @@ function timeAgo(dateStr) {
     return `${Math.floor(diff / 86400)}d ago`;
 }
 
+const NewsItem = ({ item }) => (
+    <a
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-start gap-3 py-3 -mx-2 px-2 rounded-lg transition-colors"
+        style={{ borderBottom: '1px solid var(--border)' }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
+        onMouseLeave={e => e.currentTarget.style.background = ''}
+    >
+        <div className="flex-1 min-w-0">
+            <p className="text-sm t-primary font-medium leading-snug line-clamp-2">{item.title}</p>
+            <div className="flex items-center gap-2 mt-1 text-xs t-muted">
+                <span>{item.source}</span>
+                <span>·</span>
+                <span>{timeAgo(item.publishedDate)}</span>
+            </div>
+        </div>
+    </a>
+);
+
 const NewsFeed = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [expanded, setExpanded] = useState(false);
 
     useEffect(() => {
         api.get('/sentiment/news?limit=30')
@@ -465,6 +487,9 @@ const NewsFeed = () => {
             .catch(() => {})
             .finally(() => setLoading(false));
     }, []);
+
+    const top = news.slice(0, 5);
+    const rest = news.slice(5);
 
     return (
         <div>
@@ -475,7 +500,7 @@ const NewsFeed = () => {
             </div>
             {loading ? (
                 <div className="space-y-3">
-                    {Array.from({ length: 6 }).map((_, i) => (
+                    {Array.from({ length: 5 }).map((_, i) => (
                         <div key={i} className="h-4 rounded skeleton" style={{ width: `${70 + (i % 3) * 10}%` }} />
                     ))}
                 </div>
@@ -483,29 +508,25 @@ const NewsFeed = () => {
                 <p className="text-sm t-muted text-center py-8" style={{ opacity: 0.6 }}>No news available</p>
             ) : (
                 <div>
-                    {news.map((item, i) => (
-                        <a
-                            key={i}
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-start gap-3 py-3 -mx-2 px-2 rounded-lg transition-colors"
-                            style={{ borderBottom: '1px solid var(--border)' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
-                            onMouseLeave={e => e.currentTarget.style.background = ''}
-                        >
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm t-primary font-medium leading-snug line-clamp-2">
-                                    {item.title}
-                                </p>
-                                <div className="flex items-center gap-2 mt-1 text-xs t-muted">
-                                    <span>{item.source}</span>
-                                    <span>·</span>
-                                    <span>{timeAgo(item.publishedDate)}</span>
-                                </div>
-                            </div>
-                        </a>
-                    ))}
+                    {top.map((item, i) => <NewsItem key={i} item={item} />)}
+
+                    {rest.length > 0 && (
+                        <>
+                            {expanded && rest.map((item, i) => <NewsItem key={i + 5} item={item} />)}
+                            <button
+                                onClick={() => setExpanded(p => !p)}
+                                className="flex items-center gap-2 w-full py-3 text-xs font-medium transition-colors t-muted -mx-2 px-2 rounded-lg"
+                                onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
+                                onMouseLeave={e => e.currentTarget.style.background = ''}
+                            >
+                                <ChevronDown
+                                    size={14}
+                                    style={{ transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                                />
+                                {expanded ? 'Show less' : `Show ${rest.length} more articles`}
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
         </div>
@@ -518,6 +539,7 @@ const OverviewPanel = ({ onSelectTicker, navigateTo, watchlist = [], removeFromW
     const [overview, setOverview] = useState([]);
     const [overviewLoading, setOverviewLoading] = useState(true);
     const [overviewError, setOverviewError] = useState(null);
+    const [filter, setFilter] = useState('all');
 
     const fetchOverview = useCallback(async () => {
         setOverviewLoading(true);
@@ -535,7 +557,7 @@ const OverviewPanel = ({ onSelectTicker, navigateTo, watchlist = [], removeFromW
     useEffect(() => { fetchOverview(); }, [fetchOverview]);
 
     return (
-        <div className="p-8 lg:p-12 space-y-8 anim-fade-in">
+        <div className="p-8 lg:p-12 space-y-5 anim-fade-in">
             <header
                 className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6"
                 style={{ borderBottom: '1px solid var(--border)' }}
@@ -589,6 +611,41 @@ const OverviewPanel = ({ onSelectTicker, navigateTo, watchlist = [], removeFromW
                 </div>
             )}
 
+            {/* Filter pills */}
+            {!overviewLoading && overview.length > 0 && (() => {
+                const counts = {
+                    all: overview.length,
+                    bullish: overview.filter(i => i.signal === 'bullish').length,
+                    bearish: overview.filter(i => i.signal === 'bearish').length,
+                    neutral: overview.filter(i => i.signal === 'neutral').length,
+                };
+                const pills = [
+                    { id: 'all',     label: 'All',     color: 'var(--text)',  bg: 'var(--surface-2)',         border: 'var(--border)' },
+                    { id: 'bullish', label: 'Bullish', color: '#16a34a',      bg: 'rgba(22,163,74,0.08)',     border: 'rgba(22,163,74,0.3)' },
+                    { id: 'bearish', label: 'Bearish', color: '#dc2626',      bg: 'rgba(220,38,38,0.08)',     border: 'rgba(220,38,38,0.3)' },
+                    { id: 'neutral', label: 'Neutral', color: '#d97706',      bg: 'rgba(217,119,6,0.08)',     border: 'rgba(217,119,6,0.3)' },
+                ];
+                return (
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {pills.map(p => (
+                            <button
+                                key={p.id}
+                                onClick={() => setFilter(p.id)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150"
+                                style={{
+                                    background: filter === p.id ? p.bg : 'transparent',
+                                    border: `1px solid ${filter === p.id ? p.border : 'var(--border)'}`,
+                                    color: filter === p.id ? p.color : 'var(--text-muted)',
+                                }}
+                            >
+                                {p.label}
+                                <span className="opacity-60">{counts[p.id]}</span>
+                            </button>
+                        ))}
+                    </div>
+                );
+            })()}
+
             {/* Aggregate sentiment bar */}
             {!overviewLoading && overview.length > 0 && (() => {
                 const totalBull    = overview.reduce((s, i) => s + (i.bullish_count  || 0), 0);
@@ -624,20 +681,77 @@ const OverviewPanel = ({ onSelectTicker, navigateTo, watchlist = [], removeFromW
             })()}
 
             {overviewLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-5">
-                    {Array.from({ length: 8 }).map((_, i) => (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
+                    {Array.from({ length: 10 }).map((_, i) => (
                         <SkeletonCard key={i} />
                     ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-5">
-                    {overview.map((item) => (
-                        <SentimentCard key={item.ticker} item={item} onClick={onSelectTicker} />
-                    ))}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
+                    {overview
+                        .filter(item => filter === 'all' || item.signal === filter)
+                        .map((item) => (
+                            <SentimentCard key={item.ticker} item={item} onClick={onSelectTicker} />
+                        ))
+                    }
                 </div>
             )}
 
-            <NewsFeed />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                    <NewsFeed />
+                </div>
+
+                {/* Top by Posts sidebar */}
+                <div>
+                    <div className="flex items-center gap-2 mb-3">
+                        <MessageCircle size={14} style={{ color: 'var(--text-muted)' }} />
+                        <h3 className="text-sm font-semibold t-primary">Most Discussed</h3>
+                    </div>
+                    {overviewLoading ? (
+                        <div className="space-y-2">
+                            {Array.from({ length: 6 }).map((_, i) => (
+                                <div key={i} className="h-10 rounded-lg skeleton" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {[...overview]
+                                .sort((a, b) => (b.total_posts || 0) - (a.total_posts || 0))
+                                .slice(0, 7)
+                                .map((item, i) => {
+                                    const cfg = SIGNAL_CONFIG[item.signal] || SIGNAL_CONFIG.neutral;
+                                    const Icon = cfg.icon;
+                                    const maxPosts = overview.reduce((m, x) => Math.max(m, x.total_posts || 0), 1);
+                                    const barPct = Math.round(((item.total_posts || 0) / maxPosts) * 100);
+                                    return (
+                                        <button
+                                            key={item.ticker}
+                                            onClick={() => onSelectTicker(item.ticker)}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors theme-transition"
+                                            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                                            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-hover)'}
+                                            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                                        >
+                                            <span className="text-xs t-muted w-4 text-right flex-shrink-0" style={{ opacity: 0.4 }}>{i + 1}</span>
+                                            <span className="text-sm font-bold font-mono t-primary w-12 flex-shrink-0">{item.ticker}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                                                    <div className="h-full rounded-full transition-all" style={{ width: `${barPct}%`, background: cfg.bar }} />
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 flex-shrink-0">
+                                                <Icon size={11} style={{ color: cfg.color }} />
+                                                <span className="text-xs font-mono t-muted">{item.total_posts}</span>
+                                            </div>
+                                        </button>
+                                    );
+                                })
+                            }
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

@@ -348,7 +348,7 @@ function App() {
         setActiveTab={goToTab}
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
-        onLogoClick={() => setLaunched(false)}
+        onLogoClick={() => goToTab('home')}
         navScrolled={scrollY > 10}
       />
 

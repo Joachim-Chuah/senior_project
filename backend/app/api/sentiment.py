@@ -5,6 +5,7 @@ API routes for sentiment data
 from fastapi import APIRouter, HTTPException, Query
 import asyncio
 import logging
+import time
 from typing import List
 
 from app.services.stocktwits_service import StockTwitsService
@@ -21,18 +22,36 @@ router = APIRouter()
 stocktwits_service = StockTwitsService()
 _fmp = FMPService(api_key=get_settings().FMP_API_KEY)
 
-DEFAULT_TICKERS = ["AAPL", "TSLA", "NVDA", "MSFT", "AMZN", "META", "GOOGL", "SPY"]
+FALLBACK_TICKERS = ["TSLA", "NVDA", "AAPL", "PLTR", "AMD", "AMZN", "META", "MSFT", "SPY", "GOOGL"]
+
+# Cache trending tickers for 10 minutes
+_trending_cache: dict = {"tickers": None, "expires_at": 0.0}
+
+
+def _get_trending_tickers() -> List[str]:
+    if _trending_cache["tickers"] and time.time() < _trending_cache["expires_at"]:
+        return _trending_cache["tickers"]
+    tickers = stocktwits_service.get_trending_tickers(limit=10)
+    if tickers:
+        _trending_cache["tickers"] = tickers
+        _trending_cache["expires_at"] = time.time() + 600
+        return tickers
+    return FALLBACK_TICKERS
 
 
 @router.get("/overview", response_model=List[SentimentSummary])
 async def get_sentiment_overview(
-    tickers: str = Query(default=",".join(DEFAULT_TICKERS))
+    tickers: str = Query(default="")
 ):
     """
-    Fetch lightweight sentiment summaries for multiple tickers concurrently.
-    Pass ?tickers=AAPL,TSLA,... or omit to use defaults.
+    Fetch lightweight sentiment summaries for the top 10 trending tickers on StockTwits.
+    Pass ?tickers=AAPL,TSLA,... to override, or omit to use live trending data.
     """
-    ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()][:12]
+    if tickers:
+        ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()][:12]
+    else:
+        loop = asyncio.get_event_loop()
+        ticker_list = await loop.run_in_executor(None, _get_trending_tickers)
 
     async def fetch_one(t: str) -> SentimentSummary:
         try:

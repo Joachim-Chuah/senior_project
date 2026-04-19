@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, Sparkles, Newspaper, Plus, X, Star } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, Sparkles, Newspaper, Plus, X, Star, Clock, Activity } from 'lucide-react';
 import api from '../utils/api';
 import Sparkline from './Sparkline';
 import { getLogoUrl, tickerColor, formatPct, formatPrice, formatVolume, timeAgo } from '../utils/marketHelpers';
@@ -464,6 +464,93 @@ function WatchlistSection({ watchlist, addToWatchlist, removeFromWatchlist, navi
   );
 }
 
+// ─── Market Status Panel ──────────────────────────────────────────────────────
+
+function useMarketClock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}
+
+function MarketStatusPanel({ gainers = [], losers = [] }) {
+  const now = useMarketClock();
+
+  const etStr = now.toLocaleString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+  const etDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const dayOfWeek = etDate.getDay(); // 0=Sun, 6=Sat
+  const hour = etDate.getHours();
+  const minute = etDate.getMinutes();
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const isPremarket = !isWeekend && hour >= 4 && (hour < 9 || (hour === 9 && minute < 30));
+  const isOpen = !isWeekend && (hour > 9 || (hour === 9 && minute >= 30)) && hour < 16;
+  const isAfterHours = !isWeekend && hour >= 16 && hour < 20;
+
+  const sessionLabel = isWeekend ? 'Weekend' : isPremarket ? 'Pre-market' : isOpen ? 'Market Open' : isAfterHours ? 'After-hours' : 'Market Closed';
+  const sessionColor = isOpen ? '#16a34a' : isPremarket || isAfterHours ? '#d97706' : '#6b7280';
+  const sessionBg = isOpen ? 'rgba(22,163,74,0.08)' : isPremarket || isAfterHours ? 'rgba(217,119,6,0.08)' : 'rgba(107,114,128,0.08)';
+  const sessionBorder = isOpen ? 'rgba(22,163,74,0.25)' : isPremarket || isAfterHours ? 'rgba(217,119,6,0.25)' : 'rgba(107,114,128,0.2)';
+
+  const totalMovers = gainers.length + losers.length || 1;
+  const gainersPct = Math.round((gainers.length / totalMovers) * 100);
+  const losersPct = 100 - gainersPct;
+
+  const avgGain = gainers.length > 0
+    ? (gainers.reduce((s, g) => s + Math.abs(g.changesPercentage || 0), 0) / gainers.length).toFixed(1)
+    : '—';
+  const avgLoss = losers.length > 0
+    ? (losers.reduce((s, l) => s + Math.abs(l.changesPercentage || 0), 0) / losers.length).toFixed(1)
+    : '—';
+
+  return (
+    <div className="flex flex-col gap-4 h-full">
+      {/* Session status */}
+      <div className="rounded-xl px-4 py-3 flex items-center justify-between theme-transition"
+        style={{ background: sessionBg, border: `1px solid ${sessionBorder}` }}>
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: sessionColor, boxShadow: isOpen ? `0 0 6px ${sessionColor}` : 'none' }} />
+          <span className="text-sm font-semibold" style={{ color: sessionColor }}>{sessionLabel}</span>
+        </div>
+        <div className="flex items-center gap-1.5 font-mono text-xs t-muted">
+          <Clock size={11} />
+          {etStr} ET
+        </div>
+      </div>
+
+      {/* Breadth */}
+      <div className="rounded-xl px-4 py-4 theme-transition flex-1"
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Activity size={13} style={{ color: 'var(--text-muted)' }} />
+          <span className="text-xs font-semibold t-primary uppercase tracking-wider">Market Breadth</span>
+        </div>
+
+        <div className="h-2 rounded-full overflow-hidden flex mb-2">
+          <div className="h-full transition-all" style={{ width: `${gainersPct}%`, background: '#22c55e' }} />
+          <div className="h-full transition-all" style={{ width: `${losersPct}%`, background: '#ef4444' }} />
+        </div>
+        <div className="flex justify-between text-xs mb-4">
+          <span style={{ color: '#16a34a' }}>{gainers.length} up</span>
+          <span style={{ color: '#dc2626' }}>{losers.length} down</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-lg px-3 py-2.5 text-center" style={{ background: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.2)' }}>
+            <p className="text-xs t-muted mb-0.5">Avg gain</p>
+            <p className="text-base font-bold font-mono" style={{ color: '#16a34a' }}>+{avgGain}%</p>
+          </div>
+          <div className="rounded-lg px-3 py-2.5 text-center" style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)' }}>
+            <p className="text-xs t-muted mb-0.5">Avg loss</p>
+            <p className="text-base font-bold font-mono" style={{ color: '#dc2626' }}>−{avgLoss}%</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Home({ watchlist = [], addToWatchlist, removeFromWatchlist, navigateTo }) {
@@ -531,24 +618,33 @@ export default function Home({ watchlist = [], addToWatchlist, removeFromWatchli
         </div>
       )}
 
-      {/* Indices — unified strip */}
+      {/* Top 4 most traded by volume */}
       {loading ? (
         <SkeletonBlock className="h-20 w-full rounded-xl" />
-      ) : data?.indices?.length > 0 ? (
-        <IndicesStrip indices={data.indices} />
+      ) : (data?.actives?.length > 0 || data?.indices?.length > 0) ? (
+        <div>
+          <p className="text-xs font-semibold t-muted uppercase tracking-widest mb-2 px-1">Most Traded Today</p>
+          <IndicesStrip indices={
+            (data.actives?.length > 0 ? data.actives.slice(0, 4) : data.indices)
+              .map(m => ({ ...m, symbol: m.symbol ?? m.ticker }))
+          } />
+        </div>
       ) : null}
 
-      {/* Watchlist */}
-      <div
-        className="rounded-xl px-5 py-4 theme-transition"
-        style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-      >
-        <WatchlistSection
-          watchlist={watchlist}
-          addToWatchlist={addToWatchlist}
-          removeFromWatchlist={removeFromWatchlist}
-          navigateTo={navigateTo}
-        />
+      {/* Watchlist + Market Status */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div
+          className="rounded-xl px-5 py-4 theme-transition"
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+        >
+          <WatchlistSection
+            watchlist={watchlist}
+            addToWatchlist={addToWatchlist}
+            removeFromWatchlist={removeFromWatchlist}
+            navigateTo={navigateTo}
+          />
+        </div>
+        <MarketStatusPanel gainers={data?.gainers ?? []} losers={data?.losers ?? []} />
       </div>
 
       {/* Movers — borderless lists side by side */}

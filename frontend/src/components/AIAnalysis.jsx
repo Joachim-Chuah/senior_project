@@ -28,7 +28,7 @@ const MessageBubble = ({ message, isUser }) => (
             }
         </div>
         <div
-            className="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
+            className="max-w-[70%] rounded-2xl px-4 py-3 text-base leading-relaxed"
             style={isUser ? {
                 background: 'var(--accent)',
                 color: 'var(--accent-text)',
@@ -50,7 +50,7 @@ const MessageBubble = ({ message, isUser }) => (
 const SuggestedQuestion = ({ question, onClick }) => (
     <button
         onClick={() => onClick(question)}
-        className="text-left text-xs rounded-xl px-3.5 py-3 leading-snug transition-all duration-200 theme-transition"
+        className="text-left text-sm rounded-xl px-4 py-3.5 leading-snug transition-all duration-200 theme-transition"
         style={{
             background: 'var(--surface)',
             border: '1px solid var(--border)',
@@ -164,7 +164,7 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
     };
 
     return (
-        <div className="h-[calc(100vh-4rem)] flex flex-col max-w-4xl mx-auto w-full px-6 py-8 min-h-0 anim-fade-in">
+        <div className="h-[calc(100vh-4rem)] flex flex-col w-full px-8 py-6 min-h-0 anim-fade-in">
 
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0">
@@ -244,17 +244,17 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
                                 </div>
                             </div>
 
-                            <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text)', letterSpacing: '-0.02em' }}>
+                            <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--text)', letterSpacing: '-0.02em' }}>
                                 {ticker ? `Ask me about ${ticker}` : 'Ask me anything about markets'}
                             </h3>
-                            <p className="text-sm mb-8 max-w-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                            <p className="text-base mb-8 max-w-lg leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                                 {ticker
                                     ? 'I can analyze sentiment, summarize trader opinion, and break down the bull and bear cases.'
                                     : 'Set a ticker above for stock-specific analysis, or ask a general market question.'
                                 }
                             </p>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-lg">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-2xl">
                                 {tickerQuestions.map((q, i) => (
                                     <SuggestedQuestion key={i} question={q} onClick={sendMessage} />
                                 ))}
@@ -306,7 +306,7 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
                             onKeyDown={handleKeyDown}
                             placeholder={ticker ? `Ask about ${ticker}...` : 'Ask anything about markets...'}
                             disabled={loading}
-                            className="flex-1 bg-transparent text-sm focus:outline-none resize-none overflow-hidden px-2 py-1.5 leading-relaxed"
+                            className="flex-1 bg-transparent text-base focus:outline-none resize-none overflow-hidden px-2 py-1.5 leading-relaxed"
                             style={{ color: 'var(--text)', minHeight: '36px', maxHeight: '120px' }}
                         />
                         <button
