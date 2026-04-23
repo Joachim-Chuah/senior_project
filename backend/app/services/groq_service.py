@@ -240,7 +240,7 @@ Recent Bullish Posts:
 
             # Call Groq
             response = self.client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
                 messages=messages,
                 temperature=0.7,
                 max_tokens=1024,
@@ -303,7 +303,7 @@ Be specific. Reference the actual numbers and post excerpts from context."""
 
         try:
             response = self.client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
                 messages=messages,
                 temperature=0.5,
                 max_tokens=512,
