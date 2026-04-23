@@ -268,7 +268,7 @@ function EndOfDayOverview() {
               className="text-xs px-1.5 py-0.5 rounded font-medium"
               style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)' }}
             >
-              Groq AI
+              Groq AI · Llama 4 Scout 17B
             </span>
             {generatedAt && (
               <span className="text-xs t-muted">· Generated {generatedAt}</span>
