@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sentiviz-api
+    name: rylo-api
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements-render.txt

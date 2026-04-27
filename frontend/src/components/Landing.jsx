@@ -4,7 +4,7 @@ import WaveBackground from './WaveBackground';
 import DashboardMockup from './DashboardMockup';
 
 const DEMO_USER = 'demo';
-const DEMO_PASS = 'sentiviz123';
+const DEMO_PASS = 'rylo123';
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
 const liveFeatures = [
@@ -142,7 +142,7 @@ const Landing = ({ onLaunch, darkMode, toggleDarkMode }) => {
                     >
                         <BarChart2 size={15} style={{ color: 'var(--accent-text)' }} />
                     </div>
-                    <span className="text-base font-bold tracking-tight gradient-text">Sentiviz</span>
+                    <span className="text-base font-bold tracking-tight gradient-text">Rylo</span>
                 </div>
                 <button onClick={toggleDarkMode} className="btn-ghost flex items-center gap-2 px-3 py-1.5 text-sm">
                     {darkMode ? <Sun size={14} /> : <Moon size={14} />}
@@ -160,7 +160,7 @@ const Landing = ({ onLaunch, darkMode, toggleDarkMode }) => {
 
                 {/* Headline */}
                 <h1 className="text-5xl md:text-6xl font-bold leading-none mb-4 gradient-text" style={{ letterSpacing: '-0.04em' }}>
-                    Sentiviz
+                    Rylo
                 </h1>
 
                 <p className={`text-xl md:text-2xl font-semibold mb-3 ${!typingDone ? 'typing-cursor' : ''}`}
@@ -215,7 +215,7 @@ const Landing = ({ onLaunch, darkMode, toggleDarkMode }) => {
                         <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-1" />
                     </button>
                     <p className="text-xs text-center" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>
-                        Use <span className="font-mono">demo</span> / <span className="font-mono">sentiviz123</span>
+                        Use <span className="font-mono">demo</span> / <span className="font-mono">rylo123</span>
                     </p>
                 </form>
             </div>

@@ -1,11 +1,11 @@
 # CLAUDE.md
 
 ## Project Overview
-Sentiviz is a real-time stock sentiment + confidence scoring dashboard for retail traders. It combines StockTwits social sentiment, a 6-signal confidence scorer, options chain data, and AI chat (Groq + Tavily) in a React UI.
+Rylo is a real-time stock sentiment + confidence scoring dashboard for retail traders. It combines StockTwits social sentiment, a 6-signal confidence scorer, options chain data, and AI chat (Groq + Tavily) in a React UI.
 
 - **Frontend**: React 19 + Vite + Tailwind at `frontend/` — dev server: `npm run dev` (port 5173)
 - **Backend**: FastAPI (Python) at `backend/` — dev server: `uvicorn app.main:app --reload` (port 8000)
-- **Deployed**: Frontend on Vercel (sentiviz.vercel.app), backend on Render
+- **Deployed**: Frontend on Vercel (rylo.vercel.app), backend on Render
 - **API keys**: Groq, Tavily, FMP live in `backend/.env`; Reddit creds are placeholders
 
 ## UI Constraints

@@ -1,12 +1,12 @@
-# Sentiviz
+# Rylo
 
-**Sentiviz** is a trading dashboard that helps you gauge market sentiment so you can make more informed decisions while trading. It combines social sentiment, live market data, options analysis, and AI-powered insights into a single unified view.
+**Rylo** is a trading dashboard that helps you gauge market sentiment so you can make more informed decisions while trading. It combines social sentiment, live market data, options analysis, and AI-powered insights into a single unified view.
 
 The app ships with a **Demo Mode** that runs fully offline — no paid API keys needed. In demo mode, options data is generated using real Black-Scholes math with realistic mock prices, and an interactive Black-Scholes guide walks through the model step by step.
 
-**Live demo:** https://sentiviz.vercel.app
+**Live demo:** https://rylo.vercel.app
 
-> Demo login: username `demo` · password `sentiviz123`
+> Demo login: username `demo` · password `rylo123`
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
@@ -73,7 +73,7 @@ In demo mode the tab layout changes:
 ## Architecture
 
 ```
-sentiviz/
+rylo/
 ├── backend/          # FastAPI backend
 │   ├── app/
 │   │   ├── api/      # REST endpoints
@@ -97,7 +97,7 @@ sentiviz/
 
 ```bash
 git clone https://github.com/Joachim-Chuah/senior_project.git
-cd senior_project/sentiviz
+cd senior_project/rylo
 
 cp backend/.env.example backend/.env
 # Add your API keys to backend/.env
@@ -110,7 +110,7 @@ App available at **http://localhost** · API docs at **http://localhost:8000/doc
 > Demo mode is on by default — runs fully without a Financial Modeling Prep key.
 > To disable, set `DEMO_MODE=false` in `backend/.env` and add your `FMP_API_KEY`.
 
-**Demo login:** username `demo` · password `sentiviz123`
+**Demo login:** username `demo` · password `rylo123`
 
 ---
 
@@ -122,7 +122,7 @@ App available at **http://localhost** · API docs at **http://localhost:8000/doc
 
 ```bash
 git clone https://github.com/Joachim-Chuah/senior_project.git
-cd senior_project/sentiviz
+cd senior_project/rylo
 ```
 
 #### 2. Backend
@@ -212,7 +212,7 @@ The app is hosted on two platforms:
 
 | Layer | Platform | URL |
 |-------|----------|-----|
-| Frontend | Vercel | https://sentiviz.vercel.app |
+| Frontend | Vercel | https://rylo.vercel.app |
 | Backend | Render (free tier) | https://senior-project-1tdr.onrender.com |
 
 Config files: `render.yaml` (backend), `frontend/vercel.json` (SPA rewrite rule).

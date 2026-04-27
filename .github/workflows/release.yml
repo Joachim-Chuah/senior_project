@@ -18,7 +18,7 @@ jobs:
       - name: Package docker-compose bundle
         run: |
           VERSION=${{ github.ref_name }}
-          BUNDLE="sentiviz-docker-${VERSION}"
+          BUNDLE="rylo-docker-${VERSION}"
           mkdir -p "${BUNDLE}"
 
           cp docker-compose.yml           "${BUNDLE}/"
