@@ -78,12 +78,13 @@ def _save_summary_cache(cache: dict):
 
 
 def _parse_mover(raw: dict) -> MarketMover:
+    pct = raw.get("changesPercentage") or raw.get("changePercentage") or 0
     return MarketMover(
         ticker=raw.get("symbol", ""),
         name=raw.get("name", raw.get("symbol", "")),
         price=float(raw.get("price", 0) or 0),
         change=float(raw.get("change", 0) or 0),
-        changesPercentage=float(raw.get("changesPercentage", 0) or 0),
+        changesPercentage=float(pct),
         volume=float(raw.get("volume", 0) or 0),
     )
 

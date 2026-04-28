@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
-from app.api import sentiment, ai, confidence, market, demo
+from app.api import sentiment, ai, confidence, market, demo, stocktwits_proxy
 from app.utils.config import get_settings
 
 # Configure logging
@@ -52,6 +52,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(stocktwits_proxy.router, prefix="/api/stocktwits", tags=["stocktwits"])
 app.include_router(market.router, prefix="/api/market", tags=["market"])
 app.include_router(demo.router, prefix="/api/demo", tags=["demo"])
 app.include_router(confidence.router, prefix="/api/confidence", tags=["confidence"])

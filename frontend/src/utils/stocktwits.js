@@ -1,4 +1,5 @@
-const STOCKTWITS_BASE = 'https://api.stocktwits.com/api/2';
+// Relative URL — handled by Vercel function in prod, Vite→backend proxy in dev
+const PROXY_BASE = '/api/stocktwits';
 const FALLBACK_TICKERS = ['TSLA', 'NVDA', 'AAPL', 'PLTR', 'AMD', 'AMZN', 'META', 'MSFT', 'SPY', 'GOOGL'];
 
 function parseMessage(msg) {
@@ -63,7 +64,7 @@ async function classifyTexts(api, texts) {
 
 export async function fetchSignal(api, ticker, limit = 30) {
   try {
-    const res = await fetch(`${STOCKTWITS_BASE}/streams/symbol/${ticker.toUpperCase()}.json`);
+    const res = await fetch(`${PROXY_BASE}?ticker=${encodeURIComponent(ticker.toUpperCase())}`);
     if (!res.ok) return emptySignal(ticker);
     const data = await res.json();
     if (!data.messages) return emptySignal(ticker);
@@ -103,7 +104,7 @@ export async function fetchOverview(api, tickers) {
 
 export async function fetchTrendingTickers(limit = 10) {
   try {
-    const res = await fetch(`${STOCKTWITS_BASE}/trending/symbols.json`);
+    const res = await fetch(`${PROXY_BASE}?endpoint=trending`);
     if (!res.ok) return FALLBACK_TICKERS;
     const data = await res.json();
     const tickers = (data.symbols || []).slice(0, limit).map(s => s.symbol).filter(Boolean);

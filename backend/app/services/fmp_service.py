@@ -80,7 +80,11 @@ class FMPService:
     def get_actives(self) -> List[Dict[str, Any]]:
         """Return most active stocks by volume for the day."""
         data = self._get_stable("actively-trading-list")
-        return data if isinstance(data, list) else []
+        if not isinstance(data, list) or not data:
+            return []
+        # The list endpoint only returns symbol+name on the free tier; enrich with quotes.
+        symbols = [item["symbol"] for item in data[:10] if item.get("symbol")]
+        return self.get_quotes(symbols) if symbols else []
 
     def get_market_news(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Return latest market news headlines."""
