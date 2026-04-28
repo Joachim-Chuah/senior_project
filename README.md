@@ -4,7 +4,7 @@
 
 The app ships with a **Demo Mode** that runs fully offline — no paid API keys needed. In demo mode, options data is generated using real Black-Scholes math with realistic mock prices, and an interactive Black-Scholes guide walks through the model step by step.
 
-**Live demo:** https://rylo.vercel.app
+**Live demo:** https://ryloweb.vercel.app
 
 > Demo login: username `demo` · password `rylo123`
 
@@ -212,7 +212,7 @@ The app is hosted on two platforms:
 
 | Layer | Platform | URL |
 |-------|----------|-----|
-| Frontend | Vercel | https://rylo.vercel.app |
+| Frontend | Vercel | https://ryloweb.vercel.app |
 | Backend | Render (free tier) | https://senior-project-1tdr.onrender.com |
 
 Config files: `render.yaml` (backend), `frontend/vercel.json` (SPA rewrite rule).
