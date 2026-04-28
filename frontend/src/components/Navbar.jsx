@@ -67,7 +67,7 @@ const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick
                     <BarChart2 size={13} style={{ color: 'var(--accent-text)' }} />
                 </div>
                 <span className="text-sm font-bold tracking-tight gradient-text">
-                    Sentiviz
+                    Rylo
                 </span>
             </button>
 
