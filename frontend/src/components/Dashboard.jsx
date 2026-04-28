@@ -988,11 +988,12 @@ const DetailPanel = ({ ticker, onBack, navigateTo, watchlist = [], addToWatchlis
 
 // ─── Root component ───────────────────────────────────────────────────────────
 
-const Dashboard = ({ navigateTo, crossTabTicker, clearCrossTabTicker, watchlist = [], addToWatchlist, removeFromWatchlist }) => {
+const Dashboard = ({ navigateTo, crossTabTicker, clearCrossTabTicker, watchlist = [], addToWatchlist, removeFromWatchlist, onTickerSelect }) => {
     const [ticker, setTicker] = useState(null);
 
     function openTicker(t) {
         setTicker(t);
+        onTickerSelect?.(t);
         window.history.pushState(
             { ...(window.history.state || {}), detailTicker: t },
             ''
@@ -1001,6 +1002,7 @@ const Dashboard = ({ navigateTo, crossTabTicker, clearCrossTabTicker, watchlist 
 
     function closeTicker() {
         setTicker(null);
+        onTickerSelect?.(null);
         const { detailTicker, ...rest } = window.history.state || {};
         window.history.pushState(rest, '');
     }

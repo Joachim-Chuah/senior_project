@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, BrainCircuit, Sparkles, BarChart2, Sun, Moon, Home, LineChart, BookOpen } from 'lucide-react';
+import { LayoutDashboard, BrainCircuit, BarChart2, Sun, Moon, Home, LineChart, BookOpen } from 'lucide-react';
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
@@ -19,12 +19,10 @@ const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick
         { id: 'sentiment',  label: 'Sentiment',     icon: LayoutDashboard },
         { id: 'dashboard',  label: 'Options Chain', icon: LineChart },
         { id: 'confidence', label: 'B-S Guide',     icon: BookOpen },
-        { id: 'ai',         label: 'AI Analysis',   icon: Sparkles },
     ] : [
         { id: 'home',       label: 'Home',          icon: Home },
         { id: 'dashboard',  label: 'Dashboard',     icon: LayoutDashboard },
         { id: 'confidence', label: 'Confidence',    icon: BrainCircuit },
-        { id: 'ai',         label: 'AI Analysis',   icon: Sparkles },
     ];
 
     // Animated pill
