@@ -48,24 +48,24 @@ const SentimentCard = ({ item, onClick }) => {
     return (
         <button
             onClick={() => onClick(item.ticker)}
-            className="w-full text-left rounded-xl p-4 transition-all theme-transition"
+            className="w-full text-left rounded-xl p-3 md:p-4 transition-all theme-transition overflow-hidden"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow)' }}
             onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-hover)'}
             onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
         >
-            <div className="flex items-start justify-between mb-3">
-                <div>
+            <div className="flex items-start justify-between gap-1 mb-3">
+                <div className="min-w-0">
                     <p className="text-sm font-bold t-primary font-mono">{item.ticker}</p>
-                    <p className="text-xs t-muted mt-0.5 truncate max-w-[120px]" style={{ opacity: 0.6 }}>
+                    <p className="text-xs t-muted mt-0.5 truncate" style={{ opacity: 0.6 }}>
                         {item.company_name !== item.ticker ? item.company_name : ''}
                     </p>
                 </div>
                 <span
-                    className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg flex-shrink-0"
+                    className="flex items-center gap-1 text-xs font-semibold px-1.5 py-1 rounded-lg flex-shrink-0"
                     style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color }}
                 >
                     <Icon size={11} />
-                    {cfg.label}
+                    <span className="hidden sm:inline">{cfg.label}</span>
                 </span>
             </div>
 
@@ -688,13 +688,13 @@ const OverviewPanel = ({ onSelectTicker, navigateTo, watchlist = [], removeFromW
             })()}
 
             {overviewLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-5">
                     {Array.from({ length: 10 }).map((_, i) => (
                         <SkeletonCard key={i} />
                     ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-5">
                     {overview
                         .filter(item => filter === 'all' || item.signal === filter)
                         .map((item) => (
