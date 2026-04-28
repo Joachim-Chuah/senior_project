@@ -190,7 +190,7 @@ function App() {
               ? 'rgba(255,255,255,0.055)'
               : 'rgba(99,70,229,0.07)';
             spotlightRef.current.style.background =
-              `radial-gradient(600px circle at ${rawX}px ${rawY}px, ${color}, transparent 70%)`;
+              `radial-gradient(280px circle at ${rawX}px ${rawY}px, ${color}, transparent 70%)`;
           }
         });
       }
