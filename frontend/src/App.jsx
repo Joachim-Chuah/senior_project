@@ -284,64 +284,46 @@ function App() {
       {/* ── Cursor spotlight ── */}
       <div ref={spotlightRef} className="fixed inset-0 pointer-events-none" style={{ zIndex: 1 }} />
 
-      {/* ── Noise grain overlay ── */}
-      <div className="noise-overlay fixed inset-0 pointer-events-none" style={{ zIndex: 1 }} />
+      {/* ── Noise grain overlay (light mode only) ── */}
+      {!darkMode && <div className="noise-overlay fixed inset-0 pointer-events-none" style={{ zIndex: 1 }} />}
 
-      {/* ── Background effects ── */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <WaveBackground darkMode={darkMode} />
-        <div className="blob-1 absolute" style={{
-          top:   darkMode ? '-300px' : '-120px',
-          right: darkMode ? '-300px' : '-120px',
-          width:  darkMode ? '1100px' : '580px',
-          height: darkMode ? '1100px' : '580px',
-        }}>
-          <div ref={blob1Ref} style={{
-            width: '100%', height: '100%',
-            borderRadius: '50%',
-            background: darkMode
-              ? 'radial-gradient(circle, rgba(79,126,255,0.22) 0%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(99,70,229,0.32) 0%, transparent 70%)',
-            filter: 'blur(80px)',
-            transform: `translateY(${scrollY * -0.22}px)`,
-            willChange: 'transform',
-          }} />
+      {/* ── Background effects (light mode only) ── */}
+      {!darkMode && (
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+          <WaveBackground darkMode={darkMode} />
+          <div className="blob-1 absolute" style={{ top: '-120px', right: '-120px', width: '580px', height: '580px' }}>
+            <div ref={blob1Ref} style={{
+              width: '100%', height: '100%',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(99,70,229,0.32) 0%, transparent 70%)',
+              filter: 'blur(80px)',
+              transform: `translateY(${scrollY * -0.22}px)`,
+              willChange: 'transform',
+            }} />
+          </div>
+          <div className="blob-2 absolute" style={{ bottom: '-300px', left: '-300px', width: '900px', height: '900px' }}>
+            <div ref={blob2Ref} style={{
+              width: '100%', height: '100%',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(13,59,102,0.40) 0%, transparent 70%)',
+              filter: 'blur(80px)',
+              transform: `translateY(${scrollY * -0.1}px)`,
+              willChange: 'transform',
+            }} />
+          </div>
+          <div className="blob-3 absolute" style={{ top: '40%', left: '50%', width: '700px', height: '700px', transform: 'translate(-50%, -50%)' }}>
+            <div ref={blob3Ref} style={{
+              width: '100%', height: '100%',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(99,70,229,0.20) 0%, transparent 70%)',
+              opacity: 0.5,
+              filter: 'blur(100px)',
+              transform: `translateY(${scrollY * -0.16}px)`,
+              willChange: 'transform',
+            }} />
+          </div>
         </div>
-        <div className="blob-2 absolute" style={{
-          bottom: '-300px', left: '-300px',
-          width:  darkMode ? '1000px' : '900px',
-          height: darkMode ? '1000px' : '900px',
-        }}>
-          <div ref={blob2Ref} style={{
-            width: '100%', height: '100%',
-            borderRadius: '50%',
-            background: darkMode
-              ? 'radial-gradient(circle, rgba(79,126,255,0.14) 0%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(13,59,102,0.40) 0%, transparent 70%)',
-            filter: 'blur(80px)',
-            transform: `translateY(${scrollY * -0.1}px)`,
-            willChange: 'transform',
-          }} />
-        </div>
-        <div className="blob-3 absolute" style={{
-          top: '40%', left: '50%',
-          width:  darkMode ? '900px' : '700px',
-          height: darkMode ? '900px' : '700px',
-          transform: 'translate(-50%, -50%)',
-        }}>
-          <div ref={blob3Ref} style={{
-            width: '100%', height: '100%',
-            borderRadius: '50%',
-            background: darkMode
-              ? 'radial-gradient(circle, rgba(79,126,255,0.18) 0%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(99,70,229,0.20) 0%, transparent 70%)',
-            opacity: 0.5,
-            filter: 'blur(100px)',
-            transform: `translateY(${scrollY * -0.16}px)`,
-            willChange: 'transform',
-          }} />
-        </div>
-      </div>
+      )}
 
       <Navbar
         activeTab={activeTab}
