@@ -18,7 +18,8 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
 
     # Database
-    DATABASE_URL: str = "sqlite:///./rylo.db"
+    DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/rylo"
+    DB_ECHO: bool = False
 
     # Redis Cache (optional)
     REDIS_HOST: str = "localhost"

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import List, Dict, Optional
 import logging
 
+from app.db.repository import save_sentiment_snapshot
 from app.models.sentiment import StockTwitsPost, SentimentSignal
 from app.services.finbert_service import FinBERTService
 
@@ -86,7 +87,7 @@ class StockTwitsService:
             # Get symbol info
             symbol_info = data.get('symbol', {})
 
-            return SentimentSignal(
+            signal_payload = SentimentSignal(
                 ticker=ticker.upper(),
                 signal=signal,
                 score=round(score, 3),
@@ -100,6 +101,11 @@ class StockTwitsService:
                 logo_url=symbol_info.get('logo_url'),
                 fetched_at=datetime.now(timezone.utc)
             )
+            try:
+                save_sentiment_snapshot(signal_payload)
+            except Exception as e:
+                logger.warning(f"Failed to persist sentiment snapshot for {ticker}: {e}")
+            return signal_payload
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Error fetching StockTwits data for {ticker}: {e}")

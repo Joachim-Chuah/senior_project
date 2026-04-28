@@ -24,6 +24,8 @@ redis==5.2.1
 
 # Database
 sqlalchemy==2.0.44
+alembic==1.16.5
+psycopg[binary]==3.2.10
 
 # Testing
 pytest==8.3.4

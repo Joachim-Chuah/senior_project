@@ -14,6 +14,7 @@ from typing import Optional
 
 import numpy as np
 
+from app.db.repository import save_confidence_score
 from app.models.confidence import (
     ConfidenceResult,
     FeatureSnapshot,
@@ -210,7 +211,7 @@ class ConfidenceService:
             if realized_vol_20d else None
         )
 
-        return ConfidenceResult(
+        result = ConfidenceResult(
             ticker=ticker,
             horizon=horizon,
             direction=direction,
@@ -223,6 +224,11 @@ class ConfidenceService:
             company_name=company_name,
             fetched_at=datetime.now(timezone.utc),
         )
+        try:
+            save_confidence_score(result)
+        except Exception as e:
+            logger.warning(f"Failed to persist confidence score for {ticker}/{horizon}: {e}")
+        return result
 
     # ─── Observation recording (called externally after outcomes are known) ───
 

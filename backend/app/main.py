@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 import logging
 
 from app.api import sentiment, ai, confidence, market, demo, stocktwits_proxy
+from app.db.session import check_database_connection
 from app.utils.config import get_settings
 
 # Configure logging
@@ -25,7 +26,11 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
     logger.info("Starting Sentiviz backend...")
-    # Initialize services, connections, etc.
+    db_ok = check_database_connection()
+    if db_ok:
+        logger.info("Database connection check passed.")
+    else:
+        logger.warning("Database connection check failed. Verify DATABASE_URL and database availability.")
     yield
     logger.info("Shutting down Sentiviz backend...")
     # Cleanup
@@ -65,9 +70,11 @@ health_router = APIRouter()
 @health_router.get("/health")
 async def health_check():
     """Detailed health check"""
+    db_ok = check_database_connection()
     return {
-        "status": "healthy",
+        "status": "healthy" if db_ok else "degraded",
         "services": {
+            "database": "operational" if db_ok else "unavailable",
             "confidence": "operational",
             "sentiment": "operational",
             "ai": "operational"

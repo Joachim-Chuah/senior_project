@@ -63,7 +63,19 @@ cp .env.example .env
 
 You'll need to get Reddit API credentials from: https://www.reddit.com/prefs/apps
 
-### 4. Run the Server
+### 4. Start Database + Run Migrations
+
+This backend now supports Postgres via SQLAlchemy + Alembic.
+
+```bash
+# Example local Postgres URL
+export DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/rylo
+
+# Run migrations
+alembic upgrade head
+```
+
+### 5. Run the Server
 
 ```bash
 # From the backend directory
