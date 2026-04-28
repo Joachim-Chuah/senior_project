@@ -35,6 +35,15 @@ class TestAPIEndpoints:
         assert data["status"] == "healthy"
         assert "services" in data
 
+    def test_health_check_reports_database_service(self):
+        """Health check includes database service status."""
+        response = client.get("/api/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert "services" in data
+        assert "database" in data["services"]
+        assert data["services"]["database"] in ["operational", "unavailable"]
+
     def test_demo_options_endpoint(self):
         """Test demo options chain endpoint"""
         response = client.get("/api/demo/options/AAPL?days=14")

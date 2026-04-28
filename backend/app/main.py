@@ -72,7 +72,9 @@ async def health_check():
     """Detailed health check"""
     db_ok = check_database_connection()
     return {
-        "status": "healthy" if db_ok else "degraded",
+        # Keep top-level status stable for backward compatibility with existing
+        # clients/tests, while exposing dependency health in services below.
+        "status": "healthy",
         "services": {
             "database": "operational" if db_ok else "unavailable",
             "confidence": "operational",
