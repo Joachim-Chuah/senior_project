@@ -4,23 +4,22 @@ import WaveBackground from './components/WaveBackground';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
 import Confidence from './components/Confidence';
-import AIAnalysis from './components/AIAnalysis';
 import Landing from './components/Landing';
 import MockOptionsChain from './components/MockOptionsChain';
 import BlackScholesGuide from './components/BlackScholesGuide';
+import FloatingChat from './components/FloatingChat';
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
 const TAB_ORDER = DEMO_MODE
-  ? ['home', 'sentiment', 'dashboard', 'confidence', 'ai']
-  : ['home', 'dashboard', 'confidence', 'ai'];
+  ? ['home', 'sentiment', 'dashboard', 'confidence']
+  : ['home', 'dashboard', 'confidence'];
 
 const TAB_LABELS = {
   home: 'Home',
   dashboard: DEMO_MODE ? 'Options Chain' : 'Dashboard',
   sentiment: 'Sentiment',
   confidence: DEMO_MODE ? 'B-S Guide' : 'Confidence',
-  ai: 'AI Analysis',
 };
 
 function ScrollDots({ tabs, activeTab, onNavigate }) {
@@ -60,6 +59,7 @@ function App() {
   const [launched, setLaunched] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [crossTabTicker, setCrossTabTicker] = useState(null);
+  const [activeTicker, setActiveTicker] = useState(null);
   const [scrollY, setScrollY] = useState(0);
 
   const sectionRefs = useRef({});
@@ -251,13 +251,11 @@ function App() {
       case 'dashboard':
         return DEMO_MODE
           ? <MockOptionsChain />
-          : <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} />;
+          : <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} onTickerSelect={setActiveTicker} />;
       case 'sentiment':
-        return <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} />;
+        return <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} onTickerSelect={setActiveTicker} />;
       case 'confidence':
         return DEMO_MODE ? <BlackScholesGuide /> : <Confidence navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
-      case 'ai':
-        return <AIAnalysis navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
       default:
         return null;
     }
@@ -335,6 +333,8 @@ function App() {
       />
 
       <ScrollDots tabs={TAB_ORDER} activeTab={activeTab} onNavigate={goToTab} />
+
+      <FloatingChat activeTicker={activeTicker} activeTab={activeTab} />
 
       {/* ── Snap scroll container ── */}
       <div
