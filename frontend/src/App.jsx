@@ -187,10 +187,10 @@ function App() {
 
           if (spotlightRef.current) {
             const color = darkModeRef.current
-              ? 'rgba(99,70,229,0.13)'
+              ? 'rgba(255,255,255,0.055)'
               : 'rgba(99,70,229,0.07)';
             spotlightRef.current.style.background =
-              `radial-gradient(500px circle at ${rawX}px ${rawY}px, ${color}, transparent 70%)`;
+              `radial-gradient(600px circle at ${rawX}px ${rawY}px, ${color}, transparent 70%)`;
           }
         });
       }
@@ -300,7 +300,7 @@ function App() {
             width: '100%', height: '100%',
             borderRadius: '50%',
             background: darkMode
-              ? 'radial-gradient(circle, rgba(79,70,229,0.55) 0%, transparent 70%)'
+              ? 'radial-gradient(circle, rgba(79,126,255,0.22) 0%, transparent 70%)'
               : 'radial-gradient(circle, rgba(99,70,229,0.32) 0%, transparent 70%)',
             filter: 'blur(80px)',
             transform: `translateY(${scrollY * -0.22}px)`,
@@ -316,7 +316,7 @@ function App() {
             width: '100%', height: '100%',
             borderRadius: '50%',
             background: darkMode
-              ? 'radial-gradient(circle, rgba(6,182,212,0.38) 0%, transparent 70%)'
+              ? 'radial-gradient(circle, rgba(79,126,255,0.14) 0%, transparent 70%)'
               : 'radial-gradient(circle, rgba(13,59,102,0.40) 0%, transparent 70%)',
             filter: 'blur(80px)',
             transform: `translateY(${scrollY * -0.1}px)`,
@@ -333,7 +333,7 @@ function App() {
             width: '100%', height: '100%',
             borderRadius: '50%',
             background: darkMode
-              ? 'radial-gradient(circle, rgba(79,70,229,0.55) 0%, transparent 70%)'
+              ? 'radial-gradient(circle, rgba(79,126,255,0.18) 0%, transparent 70%)'
               : 'radial-gradient(circle, rgba(99,70,229,0.20) 0%, transparent 70%)',
             opacity: 0.5,
             filter: 'blur(100px)',
