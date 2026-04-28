@@ -37,7 +37,12 @@ async def analyze_confidence(request: ConfidenceRequest) -> ConfidenceResult:
         raise HTTPException(status_code=400, detail="Ticker symbol is required")
 
     try:
-        result = await _confidence.analyze(ticker, request.horizon)
+        result = await _confidence.analyze(
+            ticker,
+            request.horizon,
+            sent_score=request.sent_score,
+            total_posts=request.total_posts,
+        )
         return result
     except Exception as e:
         logger.error(f"Confidence analysis failed for {ticker}/{request.horizon}d: {e}", exc_info=True)

@@ -123,14 +123,27 @@ class ConfidenceService:
 
     # ─── Public entry point ───────────────────────────────────────────────────
 
-    async def analyze(self, ticker: str, horizon: int) -> ConfidenceResult:
+    async def analyze(
+        self,
+        ticker: str,
+        horizon: int,
+        sent_score: Optional[float] = None,
+        total_posts: Optional[int] = None,
+    ) -> ConfidenceResult:
         ticker = ticker.upper()
 
-        # 1. Pull sentiment
-        sentiment = await self._stocktwits.get_sentiment(ticker)
+        # 1. Pull sentiment — use caller-supplied values when available so the
+        #    server never needs to hit StockTwits directly (avoids IP bans).
+        if sent_score is not None:
+            sent_score = float(sent_score)
+            sent_volume = float(_safe_log((total_posts or 0) + 1))
+            company_name_fallback = ticker
+        else:
+            sentiment = await self._stocktwits.get_sentiment(ticker)
+            sent_score = float(sentiment.score)
+            sent_volume = float(_safe_log(sentiment.total_posts + 1))
+            company_name_fallback = sentiment.company_name or ticker
 
-        sent_score = float(sentiment.score)
-        sent_volume = float(_safe_log(sentiment.total_posts + 1))
         sent_dispersion = 1.0 - abs(sent_score)
 
         history = self._sent_history[ticker]
@@ -151,7 +164,7 @@ class ConfidenceService:
         # 4. Company name
         company_name = self._fmp.get_company_name(ticker)
         if company_name == ticker:
-            company_name = sentiment.company_name or ticker
+            company_name = company_name_fallback
 
         # 5. Build feature snapshot
         features = FeatureSnapshot(

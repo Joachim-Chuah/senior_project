@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, Minus, AlertCircle, MessageCircle, Users, Ref
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 import api from '../utils/api';
+import { fetchSignal, fetchOverview as fetchStockTwitsOverview, fetchTrendingTickers } from '../utils/stocktwits';
 import { getErrorMessage } from '../utils/errorHandler';
 import TickerSearch from './TickerSearch';
 import { SkeletonCard } from './Skeleton';
@@ -147,13 +148,18 @@ function formatFeatureValue(key, value) {
     return value.toFixed(3);
 }
 
-const ConfidenceModal = ({ ticker, onClose }) => {
+const ConfidenceModal = ({ ticker, sentScore, totalPosts, onClose }) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        api.post('/confidence/analyze', { ticker, horizon: 5 })
+        api.post('/confidence/analyze', {
+            ticker,
+            horizon: 5,
+            sent_score: sentScore ?? null,
+            total_posts: totalPosts ?? null,
+        })
             .then(res => setData(res.data))
             .catch(() => setError('Failed to load confidence breakdown.'))
             .finally(() => setLoading(false));
@@ -545,8 +551,9 @@ const OverviewPanel = ({ onSelectTicker, navigateTo, watchlist = [], removeFromW
         setOverviewLoading(true);
         setOverviewError(null);
         try {
-            const res = await api.get('/sentiment/overview');
-            setOverview(res.data);
+            const tickers = await fetchTrendingTickers(10);
+            const data = await fetchStockTwitsOverview(api, tickers);
+            setOverview(data);
         } catch {
             setOverviewError('Failed to load market sentiment.');
         } finally {
@@ -772,8 +779,8 @@ const DetailPanel = ({ ticker, onBack, navigateTo, watchlist = [], addToWatchlis
             isFetchingRef.current = true;
             setLoading(true);
             setError(null);
-            const res = await api.get(`/sentiment/signal/${ticker}`);
-            setSignal(res.data);
+            const data = await fetchSignal(api, ticker);
+            setSignal(data);
             setLastRefresh(new Date());
         } catch (err) {
             setError(getErrorMessage(err));
@@ -844,7 +851,12 @@ const DetailPanel = ({ ticker, onBack, navigateTo, watchlist = [], addToWatchlis
             ) : signal ? (
                 <>
                     {showConfidence && (
-                        <ConfidenceModal ticker={ticker} onClose={() => setShowConfidence(false)} />
+                        <ConfidenceModal
+                            ticker={ticker}
+                            sentScore={signal?.score ?? null}
+                            totalPosts={signal?.total_posts ?? null}
+                            onClose={() => setShowConfidence(false)}
+                        />
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

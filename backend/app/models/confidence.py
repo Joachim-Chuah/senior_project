@@ -10,6 +10,8 @@ from datetime import datetime
 class ConfidenceRequest(BaseModel):
     ticker: str = Field(..., min_length=1, max_length=10)
     horizon: int = Field(default=1, ge=1, le=14)
+    sent_score: Optional[float] = None
+    total_posts: Optional[int] = None
 
 
 class TopDriver(BaseModel):

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, Sparkles, Newspaper, Plus, X, Star, Clock, Activity } from 'lucide-react';
 import api from '../utils/api';
+import { fetchSignal } from '../utils/stocktwits';
 import Sparkline from './Sparkline';
 import { getLogoUrl, tickerColor, formatPct, formatPrice, formatVolume, timeAgo } from '../utils/marketHelpers';
 import { useCountUp } from '../utils/useCountUp';
@@ -343,8 +344,8 @@ function WatchlistSection({ watchlist, addToWatchlist, removeFromWatchlist, navi
     watchlist.forEach(ticker => {
       if (sentiments[ticker] !== undefined || fetching[ticker]) return;
       setFetching(prev => ({ ...prev, [ticker]: true }));
-      api.get(`/sentiment/signal/${ticker}`)
-        .then(res => setSentiments(prev => ({ ...prev, [ticker]: res.data })))
+      fetchSignal(api, ticker)
+        .then(data => setSentiments(prev => ({ ...prev, [ticker]: data })))
         .catch(() => setSentiments(prev => ({ ...prev, [ticker]: null })))
         .finally(() => setFetching(prev => ({ ...prev, [ticker]: false })));
     });

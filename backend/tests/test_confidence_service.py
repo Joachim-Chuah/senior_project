@@ -232,3 +232,67 @@ class TestStatePersistence:
         state_file.write_text("{ invalid json }")
         self.svc._STATE_PATH = state_file
         self.svc._load_state()  # Should not raise
+
+
+# ─── analyze() with caller-supplied sent_score ───────────────────────────────
+
+class TestAnalyzeWithSuppliedSentiment:
+    """When sent_score is provided, StockTwits should not be called."""
+
+    def setup_method(self):
+        self.svc = _make_service()
+
+    def _mock_price(self, svc):
+        async def _price(*_):
+            return 0.02, 0.15, 1.0
+        svc._price_features = _price
+
+    def _mock_options(self, svc):
+        async def _opts(*_):
+            return None, None, None
+        svc._options_features = _opts
+
+    @pytest.mark.asyncio
+    async def test_stocktwits_not_called_when_sent_score_provided(self):
+        self._mock_price(self.svc)
+        self._mock_options(self.svc)
+        self.svc._fmp.get_company_name.return_value = "Apple Inc."
+
+        with patch.object(self.svc, "_save_state"):
+            result = await self.svc.analyze("AAPL", 5, sent_score=0.6, total_posts=20)
+
+        self.svc._stocktwits.get_sentiment.assert_not_called()
+        assert result.ticker == "AAPL"
+        assert result.features.sent_score == pytest.approx(0.6, abs=1e-3)
+
+    @pytest.mark.asyncio
+    async def test_stocktwits_called_when_no_sent_score(self):
+        self._mock_price(self.svc)
+        self._mock_options(self.svc)
+        self.svc._fmp.get_company_name.return_value = "AAPL"
+
+        mock_sentiment = MagicMock()
+        mock_sentiment.score = 0.3
+        mock_sentiment.total_posts = 10
+        mock_sentiment.company_name = "Apple Inc."
+
+        async def _fake_get(_):
+            return mock_sentiment
+        self.svc._stocktwits.get_sentiment = _fake_get
+
+        with patch.object(self.svc, "_save_state"):
+            result = await self.svc.analyze("AAPL", 5)
+
+        assert result.features.sent_score == pytest.approx(0.3, abs=1e-3)
+
+    @pytest.mark.asyncio
+    async def test_sent_score_zero_with_no_posts(self):
+        self._mock_price(self.svc)
+        self._mock_options(self.svc)
+        self.svc._fmp.get_company_name.return_value = "TSLA"
+
+        with patch.object(self.svc, "_save_state"):
+            result = await self.svc.analyze("TSLA", 5, sent_score=0.0, total_posts=0)
+
+        assert result.features.sent_score == pytest.approx(0.0)
+        assert result.features.sent_dispersion == pytest.approx(1.0)

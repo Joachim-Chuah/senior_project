@@ -8,7 +8,10 @@ import logging
 import time
 from typing import List
 
+from pydantic import BaseModel
+
 from app.services.stocktwits_service import StockTwitsService
+from app.services.finbert_service import FinBERTService
 from app.services.rss_service import fetch_news
 from app.services.fmp_service import FMPService
 from app.models.sentiment import SentimentSignal, SentimentSummary
@@ -21,6 +24,19 @@ router = APIRouter()
 
 stocktwits_service = StockTwitsService()
 _fmp = FMPService(api_key=get_settings().FMP_API_KEY)
+_finbert = FinBERTService()
+
+
+class ClassifyRequest(BaseModel):
+    texts: List[str]
+
+
+@router.post("/classify")
+async def classify_texts(body: ClassifyRequest):
+    """Classify post texts via FinBERT. Returns Bullish/Bearish/Neutral per text."""
+    loop = asyncio.get_event_loop()
+    labels = await loop.run_in_executor(None, lambda: _finbert.classify_texts(body.texts))
+    return {"labels": labels}
 
 FALLBACK_TICKERS = ["TSLA", "NVDA", "AAPL", "PLTR", "AMD", "AMZN", "META", "MSFT", "SPY", "GOOGL"]
 
