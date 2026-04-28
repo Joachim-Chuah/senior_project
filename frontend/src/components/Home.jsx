@@ -68,10 +68,10 @@ function IndicesStrip({ indices }) {
 
   return (
     <div
-      className="w-full overflow-hidden theme-transition"
+      className="w-full overflow-x-auto theme-transition"
       style={{ border: '1px solid var(--border)', borderRadius: '1rem', background: 'var(--surface-2)' }}
     >
-      <div className="flex divide-x" style={{ '--tw-divide-opacity': 1 }}>
+      <div className="flex min-w-max sm:min-w-0">
         {indices.map((quote, i) => {
           const up = quote.changesPercentage >= 0;
           const prices = sparklines[quote.symbol];
@@ -81,7 +81,7 @@ function IndicesStrip({ indices }) {
               href={stockLink(quote.symbol)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 min-w-0 px-5 py-4 flex flex-col gap-1 transition-colors"
+              className="flex-shrink-0 w-40 sm:flex-1 sm:min-w-0 px-4 sm:px-5 py-4 flex flex-col gap-1 transition-colors"
               style={{ borderRight: i < indices.length - 1 ? '1px solid var(--border)' : 'none' }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
               onMouseLeave={e => e.currentTarget.style.background = ''}
@@ -582,7 +582,7 @@ export default function Home({ watchlist = [], addToWatchlist, removeFromWatchli
     : null;
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-6 py-8 space-y-10">
+    <div className="max-w-screen-2xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-8 md:space-y-10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

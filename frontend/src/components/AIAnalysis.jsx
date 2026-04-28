@@ -164,7 +164,7 @@ const AIAnalysis = ({ navigateTo, crossTabTicker, clearCrossTabTicker }) => {
     };
 
     return (
-        <div className="h-[calc(100vh-4rem)] flex flex-col w-full px-8 py-6 min-h-0 anim-fade-in">
+        <div className="h-[calc(100vh-4rem)] flex flex-col w-full px-4 md:px-8 py-4 md:py-6 min-h-0 anim-fade-in">
 
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 flex-shrink-0">
