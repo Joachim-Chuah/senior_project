@@ -14,7 +14,7 @@ from typing import Optional
 
 import numpy as np
 
-from app.db.repository import save_confidence_score
+from app.db.repository import save_confidence_score, upsert_instrument
 from app.models.confidence import (
     ConfidenceResult,
     FeatureSnapshot,
@@ -166,6 +166,10 @@ class ConfidenceService:
         company_name = self._fmp.get_company_name(ticker)
         if company_name == ticker:
             company_name = company_name_fallback
+        try:
+            upsert_instrument(ticker=ticker, company_name=company_name)
+        except Exception as e:
+            logger.warning(f"Failed to upsert instrument for {ticker}: {e}")
 
         # 5. Build feature snapshot
         features = FeatureSnapshot(

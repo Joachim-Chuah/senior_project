@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from app.db.repository import save_market_quotes
 from app.models.market import MarketOverview, MarketQuote, MarketMover, NewsItem
 from app.services.fmp_service import FMPService
 from app.services.mock_fmp_service import MockFMPService
@@ -175,6 +176,13 @@ async def get_market_overview() -> MarketOverview:
         news=news,
         fetched_at=fetched_at,
     )
+    try:
+        save_market_quotes(indices, category="indices")
+        save_market_quotes(gainers, category="gainers")
+        save_market_quotes(losers, category="losers")
+        save_market_quotes(actives, category="actives")
+    except Exception as e:
+        logger.warning(f"Failed to persist market snapshots: {e}")
     _overview_cache["data"] = result
     _overview_cache["expires_at"] = time.time() + CACHE_TTL
     return result
