@@ -45,7 +45,9 @@ export default function WaveBackground({ darkMode }) {
 
                     ctx.beginPath();
                     ctx.arc(x, y + yDisplace, radius, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(99,70,229,${alpha.toFixed(3)})`;
+                    ctx.fillStyle = darkMode
+                        ? `rgba(79,126,255,${alpha.toFixed(3)})`
+                        : `rgba(44,62,80,${alpha.toFixed(3)})`;
                     ctx.fill();
                 }
             }

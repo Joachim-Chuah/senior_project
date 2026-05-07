@@ -188,7 +188,7 @@ function App() {
           if (spotlightRef.current) {
             const color = darkModeRef.current
               ? 'rgba(255,255,255,0.055)'
-              : 'rgba(99,70,229,0.07)';
+              : 'rgba(44,62,80,0.08)';
             spotlightRef.current.style.background =
               `radial-gradient(280px circle at ${rawX}px ${rawY}px, ${color}, transparent 70%)`;
           }
@@ -293,7 +293,7 @@ function App() {
             <div ref={blob1Ref} style={{
               width: '100%', height: '100%',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(99,70,229,0.32) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(44,62,80,0.35) 0%, transparent 70%)',
               filter: 'blur(80px)',
               transform: `translateY(${scrollY * -0.22}px)`,
               willChange: 'transform',
@@ -303,7 +303,7 @@ function App() {
             <div ref={blob2Ref} style={{
               width: '100%', height: '100%',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(13,59,102,0.40) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(44,62,80,0.40) 0%, transparent 70%)',
               filter: 'blur(80px)',
               transform: `translateY(${scrollY * -0.1}px)`,
               willChange: 'transform',
@@ -313,7 +313,7 @@ function App() {
             <div ref={blob3Ref} style={{
               width: '100%', height: '100%',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(99,70,229,0.20) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(79,126,255,0.18) 0%, transparent 70%)',
               opacity: 0.5,
               filter: 'blur(100px)',
               transform: `translateY(${scrollY * -0.16}px)`,

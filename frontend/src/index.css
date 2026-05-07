@@ -13,20 +13,20 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --bg:           #FEFAE0;
-  --surface:      rgba(255, 255, 255, 0.20);
-  --surface-2:    rgba(13, 59, 102, 0.04);
-  --text:         #0D3B66;
-  --text-muted:   rgba(13, 59, 102, 0.5);
-  --border:       rgba(13, 59, 102, 0.18);
-  --border-hover: rgba(13, 59, 102, 0.45);
-  --accent:       #0D3B66;
-  --accent-text:  #FEFAE0;
-  --shadow:       0 1px 3px rgba(13,59,102,0.06), 0 4px 20px rgba(13,59,102,0.05);
-  --shadow-hover: 0 4px 12px rgba(13,59,102,0.1), 0 12px 40px rgba(13,59,102,0.08);
-  --blob-1:       rgba(13, 59, 102, 0.55);
-  --blob-2:       rgba(13, 59, 102, 0.40);
-  --dot:          rgba(13, 59, 102, 0.07);
+  --bg:           #EBF2FA;
+  --surface:      rgba(255, 255, 255, 0.35);
+  --surface-2:    rgba(44, 62, 80, 0.04);
+  --text:         #2C3E50;
+  --text-muted:   rgba(44, 62, 80, 0.5);
+  --border:       rgba(44, 62, 80, 0.15);
+  --border-hover: rgba(44, 62, 80, 0.40);
+  --accent:       #2C3E50;
+  --accent-text:  #EBF2FA;
+  --shadow:       0 1px 3px rgba(44,62,80,0.06), 0 4px 20px rgba(44,62,80,0.05);
+  --shadow-hover: 0 4px 12px rgba(44,62,80,0.1), 0 12px 40px rgba(44,62,80,0.08);
+  --blob-1:       rgba(44, 62, 80, 0.45);
+  --blob-2:       rgba(44, 62, 80, 0.30);
+  --dot:          rgba(44, 62, 80, 0.07);
 }
 
 html.dark {
@@ -185,7 +185,7 @@ body {
 
   /* ─── Gradient text ─────────────────────────────────────────────────────── */
   .gradient-text {
-    background: linear-gradient(135deg, #0D3B66 0%, #4f46e5 100%);
+    background: linear-gradient(135deg, #2C3E50 0%, #4F7EFF 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
