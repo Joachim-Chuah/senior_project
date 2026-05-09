@@ -10,6 +10,7 @@ import logging
 from app.models.sector import SectorSummary, SectorDetail
 from app.services.fmp_service import FMPService
 from app.services.sector_service import SectorService
+from app.services.rag_service import RAGService
 from app.utils.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,7 @@ router = APIRouter()
 settings = get_settings()
 _fmp = FMPService(api_key=settings.FMP_API_KEY)
 _sector_service = SectorService(fmp_service=_fmp, settings=settings)
+_rag = RAGService()
 
 
 @router.get("", response_model=list[SectorSummary])
@@ -42,6 +44,21 @@ async def get_sector_detail(sector_id: str):
         detail = await loop.run_in_executor(None, _sector_service.get_detail, sector_id)
         if detail is None:
             raise HTTPException(status_code=404, detail=f"Sector '{sector_id}' not found")
+
+        # Ingest sector news articles into RAG (fire-and-forget)
+        articles = detail.get("articles") if isinstance(detail, dict) else getattr(detail, "articles", [])
+        if articles:
+            async def _ingest():
+                try:
+                    # Tag articles with the sector name as ticker for retrieval
+                    await loop.run_in_executor(
+                        None,
+                        lambda: _rag.ingest_news_articles(sector_id, articles)
+                    )
+                except Exception as e:
+                    logger.warning(f"RAG sector news ingest failed: {e}")
+            asyncio.ensure_future(_ingest())
+
         return detail
     except HTTPException:
         raise

@@ -82,7 +82,14 @@ class GroqService:
         self.settings = get_settings()
         self.client = None
         self.tavily = None
+        self._rag = None
         self._init_clients()
+
+    def _get_rag(self):
+        if self._rag is None:
+            from app.services.rag_service import RAGService
+            self._rag = RAGService()
+        return self._rag
 
     def _init_clients(self):
         """Initialize Groq and Tavily clients"""
@@ -217,11 +224,21 @@ Recent Bullish Posts:
                 ticker = signal.ticker if signal else None
                 web_results = await self.search_web(message, ticker)
 
+            # Retrieve relevant RAG context
+            rag_context = ""
+            try:
+                rag = self._get_rag()
+                ticker = signal.ticker if signal else None
+                chunks = rag.retrieve(message, ticker=ticker, top_k=4)
+                rag_context = rag.format_context(chunks)
+            except Exception:
+                pass
+
             # Build messages
             messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-            # Add context about current sentiment and web results
-            context = self._build_context(signal, web_results)
+            # Add context about current sentiment, web results, and RAG chunks
+            context = self._build_context(signal, web_results) + rag_context
             messages.append({
                 "role": "system",
                 "content": f"Current context:\n{context}"

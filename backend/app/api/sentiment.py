@@ -28,6 +28,9 @@ stocktwits_service = StockTwitsService(finbert=_finbert)
 _reddit = RedditService(finbert=_finbert)
 _fmp = FMPService(api_key=get_settings().FMP_API_KEY)
 
+from app.services.rag_service import RAGService
+_rag = RAGService()
+
 
 class ClassifyRequest(BaseModel):
     texts: List[str]
@@ -122,6 +125,22 @@ async def get_sentiment_signal(ticker: str):
         signal.reddit_bullish_count = len(reddit_bullish)
         signal.reddit_bearish_count = len(reddit_bearish)
         signal.reddit_total_posts = len(reddit_posts)
+
+        # Ingest company profile + Reddit news into RAG (fire-and-forget)
+        async def _ingest():
+            try:
+                await loop.run_in_executor(None, lambda: _rag.ingest_company_profile(ticker, _fmp))
+                if reddit_posts:
+                    articles = [
+                        {"title": p.title, "content": p.body,
+                         "source": f"r/{p.subreddit}", "url": p.url}
+                        for p in reddit_posts
+                    ]
+                    await loop.run_in_executor(None, lambda: _rag.ingest_news_articles(ticker, articles))
+            except Exception as e:
+                logger.warning(f"RAG background ingest failed for {ticker}: {e}")
+
+        asyncio.ensure_future(_ingest())
 
         return signal
 
