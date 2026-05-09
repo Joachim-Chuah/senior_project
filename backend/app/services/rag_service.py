@@ -59,24 +59,30 @@ class RAGService:
         except Exception as e:
             logger.warning(f"RAG ingest failed for {doc_id}: {e}")
 
-    def ingest_company_profile(self, ticker: str, fmp_service) -> None:
-        """Fetch company profile from FMP and store as a RAG document."""
+    def ingest_company_profile(self, ticker: str, fmp_service=None) -> None:
+        """Fetch company profile via yfinance and store as a RAG document."""
         ticker = ticker.upper()
         if ticker in self._ingested_tickers:
             return
         try:
-            data = fmp_service._get(f"profile/{ticker}")
-            if not isinstance(data, list) or not data:
+            import yfinance as yf
+            info = yf.Ticker(ticker).info
+            if not info or not info.get("longName"):
                 return
-            p = data[0]
+            mkt_cap = info.get("marketCap", 0)
+            mkt_cap_str = f"${mkt_cap/1e9:.1f}B" if mkt_cap else "N/A"
             text = (
-                f"{p.get('companyName', ticker)} ({ticker}) — {p.get('exchange', '')}\n"
-                f"Sector: {p.get('sector', 'N/A')} | Industry: {p.get('industry', 'N/A')}\n"
-                f"Market Cap: ${p.get('mktCap', 0)/1e9:.1f}B | "
-                f"P/E: {p.get('pe', 'N/A')} | Beta: {p.get('beta', 'N/A')}\n"
-                f"CEO: {p.get('ceo', 'N/A')} | Employees: {p.get('fullTimeEmployees', 'N/A')}\n"
-                f"HQ: {p.get('city', '')}, {p.get('country', '')}\n\n"
-                f"Description: {p.get('description', '')}"
+                f"{info.get('longName', ticker)} ({ticker}) — {info.get('exchange', '')}\n"
+                f"Sector: {info.get('sector', 'N/A')} | Industry: {info.get('industry', 'N/A')}\n"
+                f"Market Cap: {mkt_cap_str} | "
+                f"P/E (trailing): {info.get('trailingPE', 'N/A')} | "
+                f"Beta: {info.get('beta', 'N/A')}\n"
+                f"52w High: {info.get('fiftyTwoWeekHigh', 'N/A')} | "
+                f"52w Low: {info.get('fiftyTwoWeekLow', 'N/A')}\n"
+                f"CEO: {info.get('companyOfficers', [{}])[0].get('name', 'N/A') if info.get('companyOfficers') else 'N/A'}\n"
+                f"Employees: {info.get('fullTimeEmployees', 'N/A')} | "
+                f"HQ: {info.get('city', '')}, {info.get('country', '')}\n\n"
+                f"Description: {info.get('longBusinessSummary', '')}"
             )
             self.ingest(
                 doc_id=f"profile_{ticker}",

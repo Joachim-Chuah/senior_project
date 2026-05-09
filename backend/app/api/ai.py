@@ -9,14 +9,19 @@ import logging
 
 from app.services.groq_service import GroqService
 from app.services.stocktwits_service import StockTwitsService
+from app.services.rag_service import RAGService
+from app.services.fmp_service import FMPService
 from app.utils.validation import validate_ticker
 from app.utils.errors import handle_api_error
+from app.utils.config import get_settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 groq_service = GroqService()
 stocktwits_service = StockTwitsService()
+_rag = RAGService()
+_fmp = FMPService(api_key=get_settings().FMP_API_KEY)
 
 
 class ChatMessage(BaseModel):
@@ -55,12 +60,18 @@ async def chat(request: ChatRequest):
         request: Chat request with message, optional ticker, and history
     """
     try:
+        import asyncio
         signal = None
 
-        # If ticker provided, fetch current sentiment for context
+        # If ticker provided, fetch current sentiment and ensure RAG is populated
         if request.ticker:
             ticker = validate_ticker(request.ticker)
             signal = await stocktwits_service.get_sentiment(ticker)
+            # Ingest company profile into RAG if not already done (fire-and-forget)
+            loop = asyncio.get_event_loop()
+            asyncio.ensure_future(
+                loop.run_in_executor(None, lambda: _rag.ingest_company_profile(ticker, _fmp))
+            )
 
         # Convert history to dict format
         history = [{"role": m.role, "content": m.content} for m in request.history] if request.history else None
