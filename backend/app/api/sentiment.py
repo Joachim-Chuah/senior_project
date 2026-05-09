@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from app.services.stocktwits_service import StockTwitsService
 from app.services.finbert_service import FinBERTService
+from app.services.reddit_service import RedditService
 from app.services.rss_service import fetch_news
 from app.services.fmp_service import FMPService
 from app.models.sentiment import SentimentSignal, SentimentSummary
@@ -22,9 +23,10 @@ from app.utils.config import get_settings
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-stocktwits_service = StockTwitsService()
-_fmp = FMPService(api_key=get_settings().FMP_API_KEY)
 _finbert = FinBERTService()
+stocktwits_service = StockTwitsService(finbert=_finbert)
+_reddit = RedditService(finbert=_finbert)
+_fmp = FMPService(api_key=get_settings().FMP_API_KEY)
 
 
 class ClassifyRequest(BaseModel):
@@ -101,14 +103,26 @@ async def get_sentiment_overview(
 @router.get("/signal/{ticker}", response_model=SentimentSignal)
 async def get_sentiment_signal(ticker: str):
     """
-    Get real-time sentiment signal from StockTwits
-
-    Returns:
-        SentimentSignal with bull/bear breakdown and supporting posts
+    Get real-time sentiment signal blending StockTwits + Reddit.
     """
     try:
         ticker = validate_ticker(ticker)
-        signal = await stocktwits_service.get_sentiment(ticker)
+        loop = asyncio.get_event_loop()
+
+        # Fetch StockTwits and Reddit concurrently
+        signal, reddit_posts = await asyncio.gather(
+            stocktwits_service.get_sentiment(ticker),
+            loop.run_in_executor(None, lambda: _reddit.get_posts(ticker, limit_per_sub=10)),
+        )
+
+        # Attach Reddit data to the signal
+        reddit_bullish = [p for p in reddit_posts if p.sentiment == "Bullish"]
+        reddit_bearish = [p for p in reddit_posts if p.sentiment == "Bearish"]
+        signal.reddit_posts = reddit_posts
+        signal.reddit_bullish_count = len(reddit_bullish)
+        signal.reddit_bearish_count = len(reddit_bearish)
+        signal.reddit_total_posts = len(reddit_posts)
+
         return signal
 
     except HTTPException:

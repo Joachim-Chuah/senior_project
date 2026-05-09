@@ -220,6 +220,38 @@ const PostCard = ({ post, type }) => {
     );
 };
 
+// ─── Reddit post card ─────────────────────────────────────────────────────────
+
+const REDDIT_SENTIMENT_COLOR = { Bullish: '#16a34a', Bearish: '#dc2626', Neutral: '#d97706' };
+
+const RedditPostCard = ({ post }) => {
+    const dotColor = REDDIT_SENTIMENT_COLOR[post.sentiment] || 'var(--text-muted)';
+    return (
+        <a href={post.url} target="_blank" rel="noopener noreferrer"
+            className="flex items-start gap-3 px-4 py-3 transition-colors"
+            style={{ borderBottom: '1px solid var(--border)', textDecoration: 'none' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface)'}
+            onMouseLeave={e => e.currentTarget.style.background = ''}>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dotColor }} />
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>r/{post.subreddit}</span>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>u/{post.username}</span>
+                    <span className="text-xs ml-auto flex-shrink-0" style={{ color: 'var(--text-muted)' }}>{timeAgo(post.created_at)}</span>
+                </div>
+                <p className="text-sm leading-snug line-clamp-2" style={{ color: 'var(--text)' }}>{post.title}</p>
+                {post.body && (
+                    <p className="text-xs mt-1 line-clamp-1" style={{ color: 'var(--text-muted)' }}>{post.body}</p>
+                )}
+                <div className="flex items-center gap-3 mt-1.5 text-xs font-mono" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
+                    <span>↑ {post.score}</span>
+                    <span>{post.num_comments} comments</span>
+                </div>
+            </div>
+        </a>
+    );
+};
+
 // ─── News feed ────────────────────────────────────────────────────────────────
 
 const NewsItem = ({ item }) => (
@@ -649,11 +681,17 @@ const DetailPanel = ({ ticker, onBack, navigateTo, watchlist = [], addToWatchlis
 
                         {/* Source */}
                         <div className="rounded-md p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                            <p className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Source</p>
+                            <p className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Sources</p>
                             <p className="text-sm font-medium flex items-center gap-2" style={{ color: 'var(--text)' }}>
                                 <MessageCircle size={14} style={{ color: 'var(--text-muted)' }} />
                                 StockTwits
                             </p>
+                            {signal.reddit_total_posts > 0 && (
+                                <p className="text-sm font-medium flex items-center gap-2 mt-1" style={{ color: 'var(--text)' }}>
+                                    <MessageCircle size={14} style={{ color: 'var(--text-muted)' }} />
+                                    Reddit <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>({signal.reddit_total_posts} posts)</span>
+                                </p>
+                            )}
                             {lastRefresh && <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>Updated {lastRefresh.toLocaleTimeString()}</p>}
                         </div>
                     </div>
@@ -695,7 +733,7 @@ const DetailPanel = ({ ticker, onBack, navigateTo, watchlist = [], addToWatchlis
                         </button>
                     </div>
 
-                    {/* Bull / Bear posts */}
+                    {/* Bull / Bear posts — StockTwits */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {[
                             { label: 'Bull Case', type: 'bullish', count: signal.bullish_count, posts: signal.bullish_posts, color: '#16a34a', Icon: TrendingUp },
@@ -716,6 +754,26 @@ const DetailPanel = ({ ticker, onBack, navigateTo, watchlist = [], addToWatchlis
                             </div>
                         ))}
                     </div>
+
+                    {/* Reddit posts */}
+                    {signal.reddit_posts?.length > 0 && (
+                        <div className="rounded-md overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+                            <div className="flex items-center gap-2 px-4 py-2.5" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+                                <MessageCircle size={13} style={{ color: 'var(--text-muted)' }} />
+                                <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>Reddit</p>
+                                <span className="text-xs px-1.5 py-0.5 rounded font-mono ml-1"
+                                    style={{ background: 'var(--surface-2)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+                                    wsb · stocks · investing
+                                </span>
+                                <span className="ml-auto text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
+                                    {signal.reddit_bullish_count}↑ {signal.reddit_bearish_count}↓
+                                </span>
+                            </div>
+                            <div className="max-h-[400px] overflow-y-auto scrollbar-thin">
+                                {signal.reddit_posts.map(p => <RedditPostCard key={p.id} post={p} />)}
+                            </div>
+                        </div>
+                    )}
                 </>
             ) : null}
         </div>

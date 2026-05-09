@@ -18,6 +18,20 @@ class StockTwitsPost(BaseModel):
     avatar_url: Optional[str] = None
 
 
+class RedditPost(BaseModel):
+    """Individual Reddit post"""
+    id: str
+    title: str
+    body: str = ""
+    sentiment: Optional[str] = None  # "Bullish", "Bearish", "Neutral"
+    score: int = 0
+    num_comments: int = 0
+    created_at: datetime
+    username: str
+    subreddit: str
+    url: str = ""
+
+
 class SentimentSummary(BaseModel):
     """Lightweight sentiment summary — no posts, for the overview grid"""
     ticker: str
@@ -36,15 +50,21 @@ class SentimentSignal(BaseModel):
     signal: str  # "bullish", "bearish", "neutral"
     score: float  # -1 to 1
 
-    # Counts
+    # StockTwits counts
     bullish_count: int
     bearish_count: int
     neutral_count: int
     total_posts: int
 
-    # Posts for display
+    # StockTwits posts for display
     bullish_posts: List[StockTwitsPost] = Field(default_factory=list)
     bearish_posts: List[StockTwitsPost] = Field(default_factory=list)
+
+    # Reddit
+    reddit_bullish_count: int = 0
+    reddit_bearish_count: int = 0
+    reddit_total_posts: int = 0
+    reddit_posts: List[RedditPost] = Field(default_factory=list)
 
     # Metadata
     company_name: str
