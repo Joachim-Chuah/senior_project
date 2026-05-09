@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     # Finnhub
     FINNHUB_API_KEY: str = ""
 
+    # Marketaux
+    MARKETAUX_API_KEY: str = ""
+
     # Demo mode — swaps FMP for realistic mock data (no API key needed)
     DEMO_MODE: bool = False
 

@@ -180,6 +180,7 @@ class SectorService:
         self._fmp = fmp_service
         self._settings = settings
         self._finnhub = None
+        self._marketaux = None
         self._summary_cache: dict = {"data": None, "expires_at": 0.0}
         self._detail_cache: dict = {}
         self._holdings_cache: dict = {}  # etf → {tickers, names, expires_at}
@@ -202,6 +203,12 @@ class SectorService:
             from app.services.finnhub_service import FinnhubService
             self._finnhub = FinnhubService(api_key=self._settings.FINNHUB_API_KEY)
         return self._finnhub
+
+    def _get_marketaux(self):
+        if self._marketaux is None:
+            from app.services.marketaux_service import MarketauxService
+            self._marketaux = MarketauxService(api_key=self._settings.MARKETAUX_API_KEY)
+        return self._marketaux
 
     def get_all_summaries(self) -> list[dict]:
         if self._summary_cache["data"] and time.time() < self._summary_cache["expires_at"]:
@@ -345,32 +352,30 @@ class SectorService:
         articles = []
         narrative = None
 
-        # Pull ticker-specific news from Finnhub for top movers
-        try:
-            finnhub = self._get_finnhub()
-            top_tickers = [s["ticker"] for s in stocks[:5]]
-            articles = finnhub.get_sector_news(top_tickers, days=7, max_articles=6)
-        except Exception as e:
-            logger.warning(f"Finnhub news failed for {sector_id}: {e}")
+        _, _, etf, basket_tickers = BASKETS[sector_id]
 
-        # Fall back to Tavily if Finnhub returned nothing
+        # Primary: Marketaux filtered by industry tag + basket symbols.
+        # Uses hardcoded basket tickers (not live ETF holdings) to avoid
+        # cross-sector bleed from off-sector stocks in multi-theme ETFs.
+        try:
+            marketaux = self._get_marketaux()
+            if self._settings.MARKETAUX_API_KEY:
+                articles = marketaux.get_sector_news(
+                    sector_id=sector_id,
+                    symbols=basket_tickers[:6],
+                    max_articles=5,
+                    days=7,
+                )
+        except Exception as e:
+            logger.warning(f"Marketaux news failed for {sector_id}: {e}")
+
+        # Fallback: Finnhub company-news for the top basket tickers
         if not articles:
             try:
-                from tavily import TavilyClient
-                if self._settings.TAVILY_API_KEY:
-                    client = TavilyClient(api_key=self._settings.TAVILY_API_KEY)
-                    result = client.search(
-                        query=f"{name} sector stocks market rotation outlook 2026",
-                        max_results=5,
-                        search_depth="basic",
-                    )
-                    from app.services.finnhub_service import _source_from_url
-                    articles = [
-                        {"title": r.get("title"), "url": r.get("url"), "source": _source_from_url(r.get("url", ""), r.get("source") or ""), "content": r.get("content", "")[:300]}
-                        for r in result.get("results", [])
-                    ]
+                finnhub = self._get_finnhub()
+                articles = finnhub.get_sector_news(basket_tickers[:5], days=14, max_articles=6)
             except Exception as e:
-                logger.warning(f"Tavily fallback failed for {sector_id}: {e}")
+                logger.warning(f"Finnhub fallback news failed for {sector_id}: {e}")
 
         try:
             from groq import Groq
