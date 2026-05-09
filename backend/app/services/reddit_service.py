@@ -31,15 +31,27 @@ class RedditService:
 
     def get_posts(self, ticker: str, limit_per_sub: int = 10) -> list[RedditPost]:
         """
-        Search for posts mentioning `ticker` across SUBREDDITS.
+        Search for posts specifically about `ticker` across SUBREDDITS.
+        Searches using the cashtag ($TICKER) format with a larger fetch window,
+        then filters to posts where the ticker appears in the title.
         Returns posts sorted newest-first with FinBERT sentiment labels.
         """
+        ticker_upper = ticker.upper()
+        cashtag = f"${ticker_upper}"
+        seen_ids: set[str] = set()
         raw: list[dict] = []
+
         for i, sub in enumerate(SUBREDDITS):
             if i > 0:
                 time.sleep(REQUEST_DELAY)
             try:
-                raw.extend(self._search(sub, ticker, limit_per_sub))
+                # Fetch a larger pool with cashtag query, then filter to title matches
+                candidates = self._search(sub, cashtag, limit=25)
+                for p in candidates:
+                    title_up = p["title"].upper()
+                    if (ticker_upper in title_up or cashtag in p["title"]) and p["id"] not in seen_ids:
+                        seen_ids.add(p["id"])
+                        raw.append(p)
             except Exception as e:
                 logger.warning(f"Reddit scrape failed for r/{sub} ticker={ticker}: {e}")
 
