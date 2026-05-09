@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
-import WaveBackground from './components/WaveBackground';
+import PageBackground from './components/PageBackground';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
 import Confidence from './components/Confidence';
@@ -141,10 +141,7 @@ function App() {
 
   const toggleDarkMode = () => setDarkMode(prev => !prev);
 
-  // Blob + spotlight refs for direct DOM manipulation (no re-render on mousemove)
-  const blob1Ref     = useRef(null);
-  const blob2Ref     = useRef(null);
-  const blob3Ref     = useRef(null);
+  // Spotlight + mouse refs for direct DOM manipulation (no re-render on mousemove)
   const spotlightRef = useRef(null);
   const mouseRef     = useRef({ x: 0, y: 0, rawX: 0, rawY: 0 });
   const darkModeRef  = useRef(darkMode);
@@ -179,13 +176,6 @@ function App() {
           rafRef.current = null;
           const { x, y, rawX, rawY } = mouseRef.current;
           const sy = scrollTopRef.current;
-
-          if (blob1Ref.current)
-            blob1Ref.current.style.transform = `translate(${x * -120}px, calc(${y * -120}px + ${sy * -0.22}px))`;
-          if (blob2Ref.current)
-            blob2Ref.current.style.transform = `translate(${x * -60}px, calc(${y * -60}px + ${sy * -0.1}px))`;
-          if (blob3Ref.current)
-            blob3Ref.current.style.transform = `translate(calc(-50% + ${x * -90}px), calc(-50% + ${y * -90}px + ${sy * -0.16}px))`;
 
           if (spotlightRef.current) {
             const color = darkModeRef.current
@@ -289,43 +279,8 @@ function App() {
       {/* ── Noise grain overlay (light mode only) ── */}
       {!darkMode && <div className="noise-overlay fixed inset-0 pointer-events-none" style={{ zIndex: 1 }} />}
 
-      {/* ── Background effects (light mode only) ── */}
-      {!darkMode && (
-        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-          <WaveBackground darkMode={darkMode} />
-          <div className="blob-1 absolute" style={{ top: '-120px', right: '-120px', width: '580px', height: '580px' }}>
-            <div ref={blob1Ref} style={{
-              width: '100%', height: '100%',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(44,62,80,0.35) 0%, transparent 70%)',
-              filter: 'blur(80px)',
-              transform: `translateY(${scrollY * -0.22}px)`,
-              willChange: 'transform',
-            }} />
-          </div>
-          <div className="blob-2 absolute" style={{ bottom: '-300px', left: '-300px', width: '900px', height: '900px' }}>
-            <div ref={blob2Ref} style={{
-              width: '100%', height: '100%',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(44,62,80,0.40) 0%, transparent 70%)',
-              filter: 'blur(80px)',
-              transform: `translateY(${scrollY * -0.1}px)`,
-              willChange: 'transform',
-            }} />
-          </div>
-          <div className="blob-3 absolute" style={{ top: '40%', left: '50%', width: '700px', height: '700px', transform: 'translate(-50%, -50%)' }}>
-            <div ref={blob3Ref} style={{
-              width: '100%', height: '100%',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(79,126,255,0.18) 0%, transparent 70%)',
-              opacity: 0.5,
-              filter: 'blur(100px)',
-              transform: `translateY(${scrollY * -0.16}px)`,
-              willChange: 'transform',
-            }} />
-          </div>
-        </div>
-      )}
+      {/* ── Dotted wave background (both modes) ── */}
+      <PageBackground darkMode={darkMode} />
 
       <Navbar
         activeTab={activeTab}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Minus, BarChart2, Sparkles, LayoutDashboard, Home, BrainCircuit, RefreshCw, Star } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, BarChart2, LayoutDashboard, Home, BrainCircuit, RefreshCw, Layers } from 'lucide-react';
 
 const TICKERS = [
     { t: 'AAPL', signal: 'bullish', bull: 68, bear: 14, posts: 284 },
@@ -88,17 +88,17 @@ function TickerCard({ t, signal, bull, bear, posts, delay = 0 }) {
 }
 
 const NAV_ITEMS = [
-    { id: 'home',       label: 'Home',      Icon: Home },
-    { id: 'sentiment',  label: 'Sentiment', Icon: LayoutDashboard },
-    { id: 'confidence', label: 'Confidence',Icon: BrainCircuit },
-    { id: 'ai',         label: 'AI Analysis',Icon: Sparkles },
+    { id: 'home',       label: 'Home',       Icon: Home },
+    { id: 'dashboard',  label: 'Dashboard',  Icon: LayoutDashboard },
+    { id: 'sectors',    label: 'Sectors',    Icon: Layers },
+    { id: 'confidence', label: 'Confidence', Icon: BrainCircuit },
 ];
 
 export default function DashboardMockup() {
-    const [activeTab, setActiveTab] = useState('sentiment');
+    const [activeTab, setActiveTab] = useState('dashboard');
 
     useEffect(() => {
-        const tabs = ['sentiment', 'home', 'ai', 'confidence'];
+        const tabs = ['dashboard', 'home', 'sectors', 'confidence'];
         let i = 0;
         const t = setInterval(() => { i = (i + 1) % tabs.length; setActiveTab(tabs[i]); }, 3200);
         return () => clearInterval(t);
@@ -139,15 +139,15 @@ export default function DashboardMockup() {
                     <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'var(--accent)' }}>
                         <BarChart2 size={10} style={{ color: 'var(--accent-text)' }} />
                     </div>
-                    <span className="text-xs font-bold gradient-text">Sentiviz</span>
+                    <span className="text-xs font-bold gradient-text">Rylo</span>
                 </div>
             </div>
 
-            {/* Page content */}
-            <div className="p-5" style={{ minHeight: 340 }}>
+            {/* Page content — fixed height so tab switches don't resize the mockup */}
+            <div className="p-5 overflow-y-auto" style={{ height: 340 }}>
 
-                {/* Sentiment tab */}
-                {activeTab === 'sentiment' && (
+                {/* Dashboard tab */}
+                {activeTab === 'dashboard' && (
                     <div style={{ animation: 'fadeSlideIn 0.35s ease both' }}>
                         <div className="flex items-center justify-between mb-4">
                             <div>
@@ -228,35 +228,29 @@ export default function DashboardMockup() {
                     </div>
                 )}
 
-                {/* AI tab */}
-                {activeTab === 'ai' && (
+                {/* Sectors tab */}
+                {activeTab === 'sectors' && (
                     <div style={{ animation: 'fadeSlideIn 0.35s ease both' }}>
-                        <h2 className="text-base font-bold gradient-text mb-4">AI Analysis</h2>
-                        <div className="space-y-3">
+                        <h2 className="text-base font-bold gradient-text mb-4">Sector Rotation</h2>
+                        <div className="space-y-2">
                             {[
-                                { role: 'user', text: "What's the sentiment on NVDA right now?" },
-                                { role: 'ai',   text: "NVDA is showing strong bullish momentum — 74% of posts are bullish. Traders are optimistic with earnings expectations driving positive sentiment." },
-                                { role: 'user', text: 'What about downside risks?' },
-                                { role: 'ai',   text: 'Key risks include broader market volatility, VIX elevation, and stretched valuations. Watch the $880 support level closely.' },
-                            ].map((m, i) => (
-                                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`} style={{ animation: `fadeSlideIn 0.3s ${i * 80}ms both` }}>
-                                    <div className="max-w-[75%] rounded-2xl px-3 py-2 text-xs leading-relaxed"
-                                        style={m.role === 'user' ? {
-                                            background: 'var(--accent)', color: 'var(--accent-text)', borderRadius: '14px 14px 3px 14px',
-                                        } : {
-                                            background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: '14px 14px 14px 3px',
-                                        }}>
-                                        {m.text}
+                                { name: 'Technology',   etf: 'XLK', ret: '+3.2%',  pos: true,  bar: 78 },
+                                { name: 'Energy',       etf: 'XLE', ret: '+1.8%',  pos: true,  bar: 62 },
+                                { name: 'Financials',   etf: 'XLF', ret: '+0.9%',  pos: true,  bar: 51 },
+                                { name: 'Healthcare',   etf: 'XLV', ret: '-0.4%',  pos: false, bar: 43 },
+                                { name: 'Real Estate',  etf: 'XLRE',ret: '-1.7%',  pos: false, bar: 28 },
+                                { name: 'Utilities',    etf: 'XLU', ret: '-2.3%',  pos: false, bar: 18 },
+                            ].map(({ name, etf, ret, pos, bar }, i) => (
+                                <div key={etf} className="flex items-center gap-3 rounded-lg px-3 py-1.5 theme-transition"
+                                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', animation: `fadeSlideIn 0.35s ${i * 50}ms both` }}>
+                                    <span className="text-xs font-mono font-bold t-muted w-9 flex-shrink-0">{etf}</span>
+                                    <span className="text-xs t-primary flex-1">{name}</span>
+                                    <div className="w-24 h-1.5 rounded-full overflow-hidden flex-shrink-0" style={{ background: 'var(--surface-2)' }}>
+                                        <div style={{ width: `${bar}%`, height: '100%', background: pos ? '#22c55e' : '#ef4444', borderRadius: 999 }} />
                                     </div>
+                                    <span className="text-xs font-mono font-semibold w-10 text-right flex-shrink-0" style={{ color: pos ? '#16a34a' : '#dc2626' }}>{ret}</span>
                                 </div>
                             ))}
-                            <div className="flex justify-start">
-                                <div className="rounded-2xl px-3 py-2.5" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px 14px 14px 3px' }}>
-                                    <div className="flex gap-1 items-center">
-                                        {[0,1,2].map(i => <div key={i} className="thinking-dot" style={{ animationDelay: `${i * 0.2}s` }} />)}
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 )}

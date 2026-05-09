@@ -5,7 +5,7 @@
 /* ─── Base ──────────────────────────────────────────────────────────────────── */
 
 :root {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Geist Mono Variable', 'Geist Mono', ui-monospace, monospace;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;

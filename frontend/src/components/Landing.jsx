@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, BrainCircuit, Sparkles, BarChart2, ArrowRight, Sun, Moon, LineChart, BookOpen, Lock, Eye, EyeOff, Zap } from 'lucide-react';
-import WaveBackground from './WaveBackground';
 import DashboardMockup from './DashboardMockup';
+import { StarsBackground } from './StarsBackground';
 
 const DEMO_USER = 'demo';
 const DEMO_PASS = 'rylo123';
@@ -101,34 +101,11 @@ const Landing = ({ onLaunch, darkMode, toggleDarkMode }) => {
     }
 
     return (
-        <div
-            className="min-h-screen flex flex-col theme-transition"
-            style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}
-        >
-            {/* Background effects */}
-            <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                <WaveBackground darkMode={darkMode} />
-                {/* Top glow */}
-                <div className="absolute inset-0" style={{
-                    background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99,70,229,0.12) 0%, transparent 70%)',
-                }} />
-                {/* Blob — bottom right */}
-                <div className="absolute" style={{
-                    bottom: '-150px', right: '-150px',
-                    width: '600px', height: '600px',
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(6,182,212,0.18) 0%, transparent 70%)',
-                    filter: 'blur(60px)',
-                }} />
-                {/* Blob — top left */}
-                <div className="absolute" style={{
-                    top: '-100px', left: '-100px',
-                    width: '500px', height: '500px',
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(99,70,229,0.15) 0%, transparent 70%)',
-                    filter: 'blur(80px)',
-                }} />
-            </div>
+        <div className="relative min-h-screen flex flex-col theme-transition" style={{ color: 'var(--text)' }}>
+        <div className="fixed inset-0" style={{ zIndex: 0 }}>
+            <StarsBackground className="w-full h-full" />
+        </div>
+        <div className="relative flex flex-col min-h-screen" style={{ zIndex: 1 }}>
 
             {/* Navbar */}
             <div
@@ -220,56 +197,7 @@ const Landing = ({ onLaunch, darkMode, toggleDarkMode }) => {
                 </form>
             </div>
 
-            {/* Feature cards */}
-            <div className="relative z-10 px-6 pb-20 max-w-5xl mx-auto w-full">
-                <div className="flex items-center gap-3 justify-center mb-8">
-                    <div className="h-px flex-1" style={{ background: 'var(--border)' }} />
-                    <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
-                        What's inside
-                    </p>
-                    <div className="h-px flex-1" style={{ background: 'var(--border)' }} />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    {features.map(({ icon: Icon, title, description, accent, accentBorder }, i) => (
-                        <div
-                            key={title}
-                            className="relative p-6 text-left rounded-2xl overflow-hidden cursor-default"
-                            style={{
-                                background: 'var(--surface)',
-                                border: '1px solid var(--border)',
-                                boxShadow: 'var(--shadow)',
-                                animation: `fadeSlideIn 0.4s ${i * 100}ms both`,
-                                transition: 'border-color 0.3s, box-shadow 0.3s, transform 0.2s',
-                            }}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.borderColor = accentBorder;
-                                e.currentTarget.style.transform = 'translateY(-3px)';
-                                e.currentTarget.style.boxShadow = `0 12px 40px ${accent}`;
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.borderColor = 'var(--border)';
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = 'var(--shadow)';
-                            }}
-                        >
-                            {/* Accent glow in corner */}
-                            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full pointer-events-none" style={{ background: accent, filter: 'blur(20px)' }} />
-                            <div
-                                className="w-10 h-10 rounded-xl flex items-center justify-center mb-5 relative"
-                                style={{ background: accent, border: `1px solid ${accentBorder}` }}
-                            >
-                                <Icon size={18} style={{ color: 'var(--accent)' }} />
-                            </div>
-                            <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--text)', letterSpacing: '-0.01em' }}>
-                                {title}
-                            </h3>
-                            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                                {description}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </div>
+        </div>
         </div>
     );
 };
