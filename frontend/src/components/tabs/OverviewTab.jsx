@@ -114,7 +114,7 @@ export default function OverviewTab() {
       <div className="mx-auto max-w-5xl px-6 py-12">
 
         {/* Bento grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 auto-rows-auto gap-4 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 auto-rows-auto gap-4">
           <BentoCard
             {...cards[0]}
             className="lg:col-span-3 lg:row-span-2"
@@ -137,8 +137,8 @@ export default function OverviewTab() {
           />
         </div>
 
-        {/* Footer heading */}
-        <div className="max-w-2xl ml-auto text-right">
+        {/* Footer heading — negative margin pulls it up alongside the last grid row */}
+        <div className="max-w-2xl ml-auto text-right mt-6 lg:-mt-20">
           <div className="flex items-center justify-end gap-2 mb-4">
             <div
               className="w-5 h-5 rounded flex items-center justify-center"
