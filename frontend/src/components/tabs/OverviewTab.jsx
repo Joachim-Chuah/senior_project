@@ -138,7 +138,7 @@ export default function OverviewTab() {
         </div>
 
         {/* Footer heading — negative margin pulls it up alongside the last grid row */}
-        <div className="max-w-2xl ml-auto text-right mt-6 lg:-mt-20">
+        <div className="max-w-2xl ml-auto text-right mt-6 lg:-mt-48">
           <div className="flex items-center justify-end gap-2 mb-4">
             <div
               className="w-5 h-5 rounded flex items-center justify-center"
