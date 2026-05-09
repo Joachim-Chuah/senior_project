@@ -94,8 +94,15 @@ class SectorService:
     def __init__(self, fmp_service, settings):
         self._fmp = fmp_service
         self._settings = settings
+        self._finnhub = None
         self._summary_cache: dict = {"data": None, "expires_at": 0.0}
         self._detail_cache: dict = {}
+
+    def _get_finnhub(self):
+        if self._finnhub is None:
+            from app.services.finnhub_service import FinnhubService
+            self._finnhub = FinnhubService(api_key=self._settings.FINNHUB_API_KEY)
+        return self._finnhub
 
     def get_all_summaries(self) -> list[dict]:
         if self._summary_cache["data"] and time.time() < self._summary_cache["expires_at"]:
@@ -174,16 +181,22 @@ class SectorService:
 
         # Individual stock returns
         stocks = []
+        finnhub = self._get_finnhub()
         for ticker in tickers:
             try:
                 ytd, one_month = get_returns(ticker)
                 company_name = self._fmp.get_company_name(ticker)
+                analyst = finnhub.get_analyst_recommendation(ticker)
                 stocks.append({
                     "ticker": ticker,
                     "name": company_name,
                     "ytd_return": ytd,
                     "one_month_return": one_month,
                     "weight": None,
+                    "analyst_consensus": analyst.get("consensus") if analyst else None,
+                    "analyst_buy": analyst.get("buy") if analyst else None,
+                    "analyst_sell": analyst.get("sell") if analyst else None,
+                    "analyst_hold": analyst.get("hold") if analyst else None,
                 })
             except Exception as e:
                 logger.warning(f"Failed to get data for {ticker}: {e}")
@@ -232,27 +245,40 @@ class SectorService:
         articles = []
         narrative = None
 
+        # Pull ticker-specific news from Finnhub for top movers
         try:
-            from tavily import TavilyClient
-            if self._settings.TAVILY_API_KEY:
-                client = TavilyClient(api_key=self._settings.TAVILY_API_KEY)
-                result = client.search(
-                    query=f"{name} sector stocks market rotation outlook 2026",
-                    max_results=5,
-                    search_depth="basic",
-                )
-                articles = [
-                    {"title": r.get("title"), "url": r.get("url"), "source": r.get("source"), "content": r.get("content", "")[:300]}
-                    for r in result.get("results", [])
-                ]
+            finnhub = self._get_finnhub()
+            top_tickers = [s["ticker"] for s in stocks[:5]]
+            articles = finnhub.get_sector_news(top_tickers, days=7, max_articles=6)
         except Exception as e:
-            logger.warning(f"Tavily search failed for {sector_id}: {e}")
+            logger.warning(f"Finnhub news failed for {sector_id}: {e}")
+
+        # Fall back to Tavily if Finnhub returned nothing
+        if not articles:
+            try:
+                from tavily import TavilyClient
+                if self._settings.TAVILY_API_KEY:
+                    client = TavilyClient(api_key=self._settings.TAVILY_API_KEY)
+                    result = client.search(
+                        query=f"{name} sector stocks market rotation outlook 2026",
+                        max_results=5,
+                        search_depth="basic",
+                    )
+                    articles = [
+                        {"title": r.get("title"), "url": r.get("url"), "source": r.get("source"), "content": r.get("content", "")[:300]}
+                        for r in result.get("results", [])
+                    ]
+            except Exception as e:
+                logger.warning(f"Tavily fallback failed for {sector_id}: {e}")
 
         try:
             from groq import Groq
             if self._settings.GROQ_API_KEY:
                 top_stocks = ", ".join(f"{s['ticker']} ({s['ytd_return']:+.1f}%)" for s in stocks[:5])
-                snippets = "\n".join(f"- {a['title']}: {a['content']}" for a in articles[:3]) if articles else "No recent articles."
+                snippets = "\n".join(
+                    f"- {a.get('title', '')}: {a.get('summary') or a.get('content', '')}"
+                    for a in articles[:3]
+                ) if articles else "No recent articles."
                 prompt = (
                     f"{name} sector: YTD {ytd:+.1f}%, last month {one_month:+.1f}%.\n"
                     f"Top movers: {top_stocks}.\n\nRecent news:\n{snippets}\n\n"

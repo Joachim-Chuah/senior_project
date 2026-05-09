@@ -159,9 +159,10 @@ function SectorDetail({ sector, onClose }) {
                   {detail.stocks.map(stock => {
                     const positive = stock.ytd_return >= 0;
                     const barWidth = Math.abs(stock.ytd_return) / maxAbs * 100;
+                    const consensusColor = stock.analyst_consensus === 'Buy' ? '#16a34a' : stock.analyst_consensus === 'Sell' ? '#dc2626' : '#d97706';
                     return (
                       <div key={stock.ticker} className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 flex-shrink-0" style={{ width: '4.5rem' }}>
+                        <div className="flex-shrink-0" style={{ width: '4.5rem' }}>
                           <span className="text-xs font-bold font-mono" style={{ color: 'var(--text)' }}>{stock.ticker}</span>
                         </div>
                         <div className="flex-1 flex items-center gap-2">
@@ -175,6 +176,11 @@ function SectorDetail({ sector, onClose }) {
                             {positive ? '+' : ''}{stock.ytd_return.toFixed(1)}%
                           </span>
                         </div>
+                        {stock.analyst_consensus && (
+                          <span className="text-xs font-semibold flex-shrink-0 w-8 text-right" style={{ color: consensusColor }}>
+                            {stock.analyst_consensus}
+                          </span>
+                        )}
                       </div>
                     );
                   })}

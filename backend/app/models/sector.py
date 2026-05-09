@@ -8,6 +8,10 @@ class SectorStock(BaseModel):
     ytd_return: float
     one_month_return: float
     weight: Optional[float] = None
+    analyst_consensus: Optional[str] = None
+    analyst_buy: Optional[int] = None
+    analyst_hold: Optional[int] = None
+    analyst_sell: Optional[int] = None
 
 
 class SectorSummary(BaseModel):
