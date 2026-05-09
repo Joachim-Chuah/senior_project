@@ -13,6 +13,51 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+TICKER_NAMES: dict[str, str] = {
+    "NVDA": "NVIDIA", "AMD": "AMD", "INTC": "Intel", "MU": "Micron", "ARM": "Arm Holdings",
+    "MRVL": "Marvell", "AVGO": "Broadcom", "QCOM": "Qualcomm", "TXN": "Texas Instruments",
+    "AMAT": "Applied Materials", "LRCX": "Lam Research", "KLAC": "KLA Corp",
+    "ADI": "Analog Devices", "ASML": "ASML", "TSM": "TSMC",
+    "AAPL": "Apple", "MSFT": "Microsoft", "GOOGL": "Alphabet", "META": "Meta",
+    "AMZN": "Amazon", "ORCL": "Oracle", "CRM": "Salesforce", "ADBE": "Adobe", "CSCO": "Cisco",
+    "DELL": "Dell", "HPE": "Hewlett Packard Enterprise",
+    "CRWD": "CrowdStrike", "PANW": "Palo Alto Networks", "ZS": "Zscaler", "FTNT": "Fortinet",
+    "OKTA": "Okta", "S": "SentinelOne", "CYBR": "CyberArk", "TENB": "Tenable",
+    "NET": "Cloudflare", "CHKP": "Check Point",
+    "XOM": "ExxonMobil", "CVX": "Chevron", "COP": "ConocoPhillips", "EOG": "EOG Resources",
+    "SLB": "SLB", "MPC": "Marathon Petroleum", "PSX": "Phillips 66",
+    "VLO": "Valero Energy", "HAL": "Halliburton", "OXY": "Occidental Petroleum",
+    "JPM": "JPMorgan Chase", "BAC": "Bank of America", "GS": "Goldman Sachs",
+    "MS": "Morgan Stanley", "WFC": "Wells Fargo", "BLK": "BlackRock",
+    "SCHW": "Charles Schwab", "C": "Citigroup", "AXP": "American Express", "V": "Visa",
+    "JNJ": "Johnson & Johnson", "UNH": "UnitedHealth", "PFE": "Pfizer", "ABBV": "AbbVie",
+    "MRK": "Merck", "LLY": "Eli Lilly", "BMY": "Bristol-Myers Squibb",
+    "CVS": "CVS Health", "TMO": "Thermo Fisher", "DHR": "Danaher",
+    "MRNA": "Moderna", "BIIB": "Biogen", "REGN": "Regeneron", "VRTX": "Vertex",
+    "GILD": "Gilead Sciences", "SGEN": "Seagen", "ALNY": "Alnylam",
+    "BMRN": "BioMarin", "IONS": "Ionis", "FATE": "Fate Therapeutics",
+    "CAT": "Caterpillar", "DE": "Deere & Co", "GE": "GE Aerospace", "HON": "Honeywell",
+    "MMM": "3M", "UPS": "UPS", "FDX": "FedEx", "EMR": "Emerson Electric",
+    "ETN": "Eaton", "ITW": "Illinois Tool Works",
+    "LMT": "Lockheed Martin", "RTX": "RTX Corp", "NOC": "Northrop Grumman",
+    "GD": "General Dynamics", "BA": "Boeing", "AXON": "Axon", "KTOS": "Kratos",
+    "RKLB": "Rocket Lab", "HII": "HII", "L3H": "L3Harris",
+    "ENPH": "Enphase Energy", "FSLR": "First Solar", "PLUG": "Plug Power",
+    "SEDG": "SolarEdge", "RUN": "Sunrun", "NOVA": "Sunnova", "ARRY": "Array Technologies",
+    "CSIQ": "Canadian Solar", "HASI": "HA Sustainable Infrastructure", "NEE": "NextEra Energy",
+    "TSLA": "Tesla", "RIVN": "Rivian", "NIO": "NIO", "LCID": "Lucid Motors",
+    "GM": "General Motors", "F": "Ford", "CHPT": "ChargePoint",
+    "BLNK": "Blink Charging", "XPEV": "XPeng", "LI": "Li Auto",
+    "HD": "Home Depot", "MCD": "McDonald's", "NKE": "Nike", "SBUX": "Starbucks",
+    "LOW": "Lowe's", "TGT": "Target", "BKNG": "Booking Holdings", "CMG": "Chipotle",
+    "AMT": "American Tower", "PLD": "Prologis", "CCI": "Crown Castle",
+    "EQIX": "Equinix", "SPG": "Simon Property", "O": "Realty Income",
+    "AVB": "AvalonBay", "EQR": "Equity Residential", "DLR": "Digital Realty", "PSA": "Public Storage",
+    "LIN": "Linde", "APD": "Air Products", "SHW": "Sherwin-Williams",
+    "FCX": "Freeport-McMoRan", "NEM": "Newmont", "NUE": "Nucor",
+    "MOS": "Mosaic", "ALB": "Albemarle", "CF": "CF Industries", "VMC": "Vulcan Materials",
+}
+
 # Thematic baskets: id → (name, category, proxy_etf, tickers)
 BASKETS: dict = {
     "semiconductors":    ("Semiconductors",        "Technology",  "SOXX", ["NVDA","AMD","INTC","MU","ARM","MRVL","AVGO","QCOM","TXN","AMAT","LRCX","KLAC","ADI","ASML","TSM"]),
@@ -68,6 +113,46 @@ def _derive_rotation(ytd: float, one_month: float, phase: str) -> str:
     return "Neutral"
 
 
+def _fetch_etf_holdings(etf: str, max_n: int = 15) -> tuple[list[str], dict[str, str]]:
+    """
+    Fetch top N holdings for an ETF via yfinance funds_data.
+    Returns (ticker_list, {ticker: name}). Returns ([], {}) on any failure.
+    """
+    try:
+        df = yf.Ticker(etf).funds_data.top_holdings
+        if df is None or df.empty:
+            return [], {}
+
+        tickers: list[str] = []
+        names: dict[str, str] = {}
+
+        # yfinance returns a MultiIndex (symbol, name) or a flat index with a Symbol column
+        # depending on version — handle both shapes.
+        idx = df.index
+        if isinstance(idx, pd.MultiIndex):
+            for sym, name in idx[:max_n]:
+                sym = str(sym).strip()
+                if sym and sym.lower() != "nan":
+                    tickers.append(sym)
+                    names[sym] = str(name).strip()
+        else:
+            sym_col = next((c for c in df.columns if c.lower() == "symbol"), None)
+            name_col = next((c for c in df.columns if c.lower() in ("name", "holdingname", "security")), None)
+            rows = df.reset_index() if sym_col is None else df
+            sym_col = sym_col or (df.index.name if df.index.name else None)
+            for _, row in df.head(max_n).iterrows():
+                sym = str(row[sym_col]).strip() if sym_col and sym_col in row else str(row.name).strip()
+                if sym and sym.lower() != "nan":
+                    tickers.append(sym)
+                    if name_col and name_col in row:
+                        names[sym] = str(row[name_col]).strip()
+
+        return tickers, names
+    except Exception as e:
+        logger.debug(f"ETF holdings fetch skipped for {etf}: {e}")
+        return [], {}
+
+
 def _fetch_prices(tickers: list[str]) -> pd.DataFrame:
     """Batch download ~130 days of closes for a list of tickers."""
     try:
@@ -97,6 +182,20 @@ class SectorService:
         self._finnhub = None
         self._summary_cache: dict = {"data": None, "expires_at": 0.0}
         self._detail_cache: dict = {}
+        self._holdings_cache: dict = {}  # etf → {tickers, names, expires_at}
+
+    def _get_holdings(self, etf: str, fallback: list[str]) -> tuple[list[str], dict[str, str]]:
+        """Return live ETF holdings with 24h cache; falls back to the hardcoded list."""
+        entry = self._holdings_cache.get(etf)
+        if entry and time.time() < entry["expires_at"]:
+            return entry["tickers"], entry["names"]
+        tickers, names = _fetch_etf_holdings(etf)
+        if tickers:
+            logger.info(f"Loaded {len(tickers)} live holdings for {etf}")
+            self._holdings_cache[etf] = {"tickers": tickers, "names": names, "expires_at": time.time() + 86400}
+            return tickers, names
+        logger.debug(f"Using fallback tickers for {etf}")
+        return fallback, {}
 
     def _get_finnhub(self):
         if self._finnhub is None:
@@ -155,7 +254,8 @@ class SectorService:
         if sector_id not in BASKETS:
             return None
 
-        name, category, etf, tickers = BASKETS[sector_id]
+        name, category, etf, fallback_tickers = BASKETS[sector_id]
+        tickers, live_names = self._get_holdings(etf, fallback_tickers)
 
         # Batch download ETF + all constituent tickers
         all_symbols = [etf] + tickers
@@ -185,7 +285,7 @@ class SectorService:
         for ticker in tickers:
             try:
                 ytd, one_month = get_returns(ticker)
-                company_name = self._fmp.get_company_name(ticker)
+                company_name = live_names.get(ticker) or TICKER_NAMES.get(ticker, ticker)
                 analyst = finnhub.get_analyst_recommendation(ticker)
                 stocks.append({
                     "ticker": ticker,
@@ -264,8 +364,9 @@ class SectorService:
                         max_results=5,
                         search_depth="basic",
                     )
+                    from app.services.finnhub_service import _source_from_url
                     articles = [
-                        {"title": r.get("title"), "url": r.get("url"), "source": r.get("source"), "content": r.get("content", "")[:300]}
+                        {"title": r.get("title"), "url": r.get("url"), "source": _source_from_url(r.get("url", ""), r.get("source") or ""), "content": r.get("content", "")[:300]}
                         for r in result.get("results", [])
                     ]
             except Exception as e:

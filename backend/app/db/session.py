@@ -12,15 +12,24 @@ from app.utils.config import get_settings
 settings = get_settings()
 
 
+def _normalize_database_url(database_url: str) -> str:
+    # Ensure PostgreSQL URLs use the installed psycopg (v3) driver.
+    if database_url.startswith("postgresql://"):
+        return database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return database_url
+
+
 def _build_connect_args(database_url: str) -> dict[str, object]:
     if database_url.startswith("sqlite"):
         return {"check_same_thread": False}
     return {}
 
 
+database_url = _normalize_database_url(settings.DATABASE_URL)
+
 engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args=_build_connect_args(settings.DATABASE_URL),
+    database_url,
+    connect_args=_build_connect_args(database_url),
     pool_pre_ping=True,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

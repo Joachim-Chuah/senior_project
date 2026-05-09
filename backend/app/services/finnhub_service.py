@@ -6,10 +6,51 @@ import logging
 import requests
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
 FINNHUB_BASE = "https://finnhub.io/api/v1"
+
+_DOMAIN_NAMES = {
+    "finance.yahoo.com": "Yahoo Finance",
+    "www.fool.com": "Motley Fool",
+    "fool.com": "Motley Fool",
+    "www.benzinga.com": "Benzinga",
+    "benzinga.com": "Benzinga",
+    "www.reuters.com": "Reuters",
+    "reuters.com": "Reuters",
+    "www.bloomberg.com": "Bloomberg",
+    "bloomberg.com": "Bloomberg",
+    "www.marketwatch.com": "MarketWatch",
+    "marketwatch.com": "MarketWatch",
+    "www.wsj.com": "WSJ",
+    "wsj.com": "WSJ",
+    "www.cnbc.com": "CNBC",
+    "cnbc.com": "CNBC",
+    "www.barrons.com": "Barron's",
+    "barrons.com": "Barron's",
+    "seekingalpha.com": "Seeking Alpha",
+    "www.seekingalpha.com": "Seeking Alpha",
+    "www.investopedia.com": "Investopedia",
+    "investopedia.com": "Investopedia",
+    "finance.yahoo.com": "Yahoo Finance",
+    "prnewswire.com": "PR Newswire",
+    "www.prnewswire.com": "PR Newswire",
+    "businesswire.com": "Business Wire",
+    "www.businesswire.com": "Business Wire",
+    "globenewswire.com": "GlobeNewswire",
+    "www.globenewswire.com": "GlobeNewswire",
+}
+
+
+def _source_from_url(url: str, fallback: str) -> str:
+    """Extract a clean publisher name from a URL; use fallback if unknown."""
+    try:
+        host = urlparse(url).netloc.lower()
+        return _DOMAIN_NAMES.get(host) or _DOMAIN_NAMES.get(host.removeprefix("www.")) or fallback
+    except Exception:
+        return fallback
 
 
 class FinnhubService:
@@ -44,7 +85,7 @@ class FinnhubService:
             {
                 "title": item.get("headline", ""),
                 "url": item.get("url", ""),
-                "source": item.get("source", ""),
+                "source": _source_from_url(item.get("url", ""), item.get("source", "")),
                 "summary": item.get("summary", "")[:300],
                 "datetime": item.get("datetime"),
             }
