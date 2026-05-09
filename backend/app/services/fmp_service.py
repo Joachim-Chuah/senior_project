@@ -104,6 +104,17 @@ class FMPService:
         ]
         return filtered[:limit]
 
+    def get_etf_holdings(self, etf: str) -> List[Dict[str, Any]]:
+        """Return ETF constituent holdings (asset, weightPercentage)."""
+        data = self._get(f"etf-holder/{etf.upper()}")
+        if not isinstance(data, list):
+            return []
+        return [
+            {"asset": h.get("asset", ""), "weightPercentage": h.get("weightPercentage")}
+            for h in data
+            if h.get("asset") and "." not in h.get("asset", "")
+        ]
+
     def get_quotes(self, symbols: List[str]) -> List[Dict[str, Any]]:
         """Return quotes for a list of symbols — one request per symbol (free tier limit)."""
         results = []

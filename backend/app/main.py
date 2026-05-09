@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
-from app.api import sentiment, ai, confidence, market, demo, stocktwits_proxy
+from app.api import sentiment, ai, confidence, market, demo, stocktwits_proxy, sectors
 from app.db.session import check_database_connection
 from app.utils.config import get_settings
 
@@ -63,6 +63,7 @@ app.include_router(demo.router, prefix="/api/demo", tags=["demo"])
 app.include_router(confidence.router, prefix="/api/confidence", tags=["confidence"])
 app.include_router(sentiment.router, prefix="/api/sentiment", tags=["sentiment"])
 app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
+app.include_router(sectors.router, prefix="/api/sectors", tags=["sectors"])
 
 # Health Router to match frontend /api/health
 health_router = APIRouter()

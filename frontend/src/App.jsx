@@ -8,17 +8,19 @@ import Landing from './components/Landing';
 import MockOptionsChain from './components/MockOptionsChain';
 import BlackScholesGuide from './components/BlackScholesGuide';
 import FloatingChat from './components/FloatingChat';
+import Sectors from './components/Sectors';
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
 const TAB_ORDER = DEMO_MODE
   ? ['home', 'sentiment', 'dashboard', 'confidence']
-  : ['home', 'dashboard', 'confidence'];
+  : ['home', 'dashboard', 'sectors', 'confidence'];
 
 const TAB_LABELS = {
   home: 'Home',
   dashboard: DEMO_MODE ? 'Options Chain' : 'Dashboard',
   sentiment: 'Sentiment',
+  sectors: 'Sectors',
   confidence: DEMO_MODE ? 'B-S Guide' : 'Confidence',
 };
 
@@ -254,6 +256,8 @@ function App() {
           : <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} onTickerSelect={setActiveTicker} />;
       case 'sentiment':
         return <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} onTickerSelect={setActiveTicker} />;
+      case 'sectors':
+        return <Sectors />;
       case 'confidence':
         return DEMO_MODE ? <BlackScholesGuide /> : <Confidence navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
       default:

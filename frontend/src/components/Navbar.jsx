@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, BrainCircuit, BarChart2, Sun, Moon, Home, LineChart, BookOpen, Menu, X } from 'lucide-react';
+import { LayoutDashboard, BrainCircuit, BarChart2, Sun, Moon, Home, LineChart, BookOpen, Menu, X, Layers } from 'lucide-react';
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
@@ -34,6 +34,7 @@ const Navbar = ({ activeTab, setActiveTab, darkMode, toggleDarkMode, onLogoClick
     ] : [
         { id: 'home',       label: 'Home',          icon: Home },
         { id: 'dashboard',  label: 'Dashboard',     icon: LayoutDashboard },
+        { id: 'sectors',    label: 'Sectors',       icon: Layers },
         { id: 'confidence', label: 'Confidence',    icon: BrainCircuit },
     ];
 
