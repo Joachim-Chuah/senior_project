@@ -1,61 +1,117 @@
 """
 RAG (Retrieval Augmented Generation) service.
-Stores and retrieves financial documents using ChromaDB + sentence-transformers.
-Documents are ingested lazily (on first ticker query) and retrieved to enrich
-Groq chat responses with company-specific knowledge.
+Stores and retrieves financial documents using pgvector on the existing
+PostgreSQL database — persists across Render deploys with no extra service.
 """
 
+import json
 import logging
-import os
 import hashlib
+import os
 from datetime import datetime, timezone
 from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-_PERSIST_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "rag_data")
-_MODEL_NAME = "all-MiniLM-L6-v2"  # 22 MB, 384-dim, fast
+_MODEL_NAME = "all-MiniLM-L6-v2"  # 384-dim, 22 MB, fast
+_EMBEDDING_DIM = 384
+
+_DDL = """
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS rag_documents (
+    id        SERIAL PRIMARY KEY,
+    doc_id    TEXT UNIQUE NOT NULL,
+    ticker    TEXT,
+    doc_type  TEXT,
+    content   TEXT NOT NULL,
+    source    TEXT DEFAULT '',
+    metadata  JSONB DEFAULT '{}',
+    embedding vector(384),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS rag_doc_embedding_idx
+ON rag_documents USING hnsw (embedding vector_cosine_ops);
+
+CREATE INDEX IF NOT EXISTS rag_doc_ticker_idx
+ON rag_documents (ticker);
+"""
+
+
+def _vec(embedding: list[float]) -> str:
+    """Convert a float list to pgvector literal string."""
+    return "[" + ",".join(f"{x:.6f}" for x in embedding) + "]"
 
 
 class RAGService:
-    def __init__(self, persist_dir: str = _PERSIST_DIR):
-        self._persist_dir = persist_dir
-        self._client = None
-        self._collection = None
+    def __init__(self):
+        self._model = None
+        self._db_url: str = ""
+        self._ready = False
         self._ingested_tickers: set[str] = set()
 
-    def _init(self):
-        """Lazy-init ChromaDB and embedding function (avoids slow startup)."""
-        if self._collection is not None:
-            return
+    def _init(self) -> bool:
+        """Lazy-init: load embedding model and ensure DB table exists."""
+        if self._ready:
+            return True
         try:
-            import chromadb
-            from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+            from sentence_transformers import SentenceTransformer
+            self._model = SentenceTransformer(_MODEL_NAME)
 
-            os.makedirs(self._persist_dir, exist_ok=True)
-            self._client = chromadb.PersistentClient(path=self._persist_dir)
-            ef = SentenceTransformerEmbeddingFunction(model_name=_MODEL_NAME)
-            self._collection = self._client.get_or_create_collection(
-                name="rylo_financial",
-                embedding_function=ef,
-                metadata={"hnsw:space": "cosine"},
-            )
-            logger.info(f"RAG collection ready — {self._collection.count()} docs")
+            from dotenv import load_dotenv
+            load_dotenv()
+            self._db_url = os.environ.get("DATABASE_URL", "")
+            if not self._db_url:
+                logger.warning("DATABASE_URL not set — RAG disabled")
+                return False
+
+            import psycopg
+            with psycopg.connect(self._db_url, autocommit=True) as conn:
+                conn.execute(_DDL)
+
+            self._ready = True
+            logger.info("RAG service ready (pgvector)")
+            return True
         except Exception as e:
             logger.warning(f"RAG init failed (will skip RAG): {e}")
+            return False
+
+    def _embed(self, text: str) -> list[float]:
+        return self._model.encode(text, normalize_embeddings=True).tolist()
 
     # ── Ingestion ─────────────────────────────────────────────────────────────
 
     def ingest(self, doc_id: str, text: str, metadata: dict | None = None) -> None:
-        self._init()
-        if self._collection is None:
+        if not self._init():
             return
         try:
-            self._collection.upsert(
-                ids=[doc_id],
-                documents=[text],
-                metadatas=[metadata or {}],
-            )
+            import psycopg
+            embedding = self._embed(text)
+            meta = metadata or {}
+            with psycopg.connect(self._db_url) as conn:
+                conn.execute(
+                    """
+                    INSERT INTO rag_documents
+                        (doc_id, ticker, doc_type, content, source, metadata, embedding)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s::vector)
+                    ON CONFLICT (doc_id) DO UPDATE SET
+                        content   = EXCLUDED.content,
+                        embedding = EXCLUDED.embedding,
+                        metadata  = EXCLUDED.metadata,
+                        created_at = NOW()
+                    """,
+                    (
+                        doc_id,
+                        meta.get("ticker", ""),
+                        meta.get("doc_type", ""),
+                        text,
+                        meta.get("source", ""),
+                        json.dumps(meta),
+                        _vec(embedding),
+                    ),
+                )
+                conn.commit()
         except Exception as e:
             logger.warning(f"RAG ingest failed for {doc_id}: {e}")
 
@@ -71,6 +127,8 @@ class RAGService:
                 return
             mkt_cap = info.get("marketCap", 0)
             mkt_cap_str = f"${mkt_cap/1e9:.1f}B" if mkt_cap else "N/A"
+            officers = info.get("companyOfficers") or []
+            ceo = officers[0].get("name", "N/A") if officers else "N/A"
             text = (
                 f"{info.get('longName', ticker)} ({ticker}) — {info.get('exchange', '')}\n"
                 f"Sector: {info.get('sector', 'N/A')} | Industry: {info.get('industry', 'N/A')}\n"
@@ -79,8 +137,7 @@ class RAGService:
                 f"Beta: {info.get('beta', 'N/A')}\n"
                 f"52w High: {info.get('fiftyTwoWeekHigh', 'N/A')} | "
                 f"52w Low: {info.get('fiftyTwoWeekLow', 'N/A')}\n"
-                f"CEO: {info.get('companyOfficers', [{}])[0].get('name', 'N/A') if info.get('companyOfficers') else 'N/A'}\n"
-                f"Employees: {info.get('fullTimeEmployees', 'N/A')} | "
+                f"CEO: {ceo} | Employees: {info.get('fullTimeEmployees', 'N/A')} | "
                 f"HQ: {info.get('city', '')}, {info.get('country', '')}\n\n"
                 f"Description: {info.get('longBusinessSummary', '')}"
             )
@@ -91,16 +148,17 @@ class RAGService:
                           "ingested_at": datetime.now(timezone.utc).isoformat()},
             )
             self._ingested_tickers.add(ticker)
-            logger.info(f"Ingested company profile for {ticker}")
+            logger.info(f"RAG: ingested company profile for {ticker}")
         except Exception as e:
-            logger.warning(f"Profile ingest failed for {ticker}: {e}")
+            logger.warning(f"RAG profile ingest failed for {ticker}: {e}")
 
     def ingest_news_articles(self, ticker: str, articles: list[dict]) -> None:
-        """Ingest a list of news articles (title + content) for a ticker."""
-        self._init()
+        """Ingest news articles (title + content) tagged to a ticker."""
+        if not self._init():
+            return
         ticker = ticker.upper()
         for article in articles:
-            title = article.get("title", "").strip()
+            title = (article.get("title") or "").strip()
             content = article.get("content") or article.get("summary") or ""
             if not title:
                 continue
@@ -124,29 +182,50 @@ class RAGService:
         ticker: Optional[str] = None,
         top_k: int = 4,
     ) -> list[dict]:
-        """
-        Return the top_k most relevant document chunks for a query.
-        If ticker is set, prefer ticker-specific docs but fall back to all.
-        """
-        self._init()
-        if self._collection is None or self._collection.count() == 0:
+        """Return the top_k most relevant chunks for a query."""
+        if not self._init():
             return []
         try:
-            where = {"ticker": ticker.upper()} if ticker else None
-            results = self._collection.query(
-                query_texts=[query],
-                n_results=min(top_k, self._collection.count()),
-                where=where,
-            )
-            docs = results.get("documents", [[]])[0]
-            metas = results.get("metadatas", [[]])[0]
-            return [{"text": d, "meta": m} for d, m in zip(docs, metas)]
+            import psycopg
+            embedding = self._embed(query)
+            vec = _vec(embedding)
+
+            with psycopg.connect(self._db_url) as conn:
+                if ticker:
+                    rows = conn.execute(
+                        """
+                        SELECT content, doc_type, source, ticker
+                        FROM rag_documents
+                        WHERE ticker = %s
+                        ORDER BY embedding <=> %s::vector
+                        LIMIT %s
+                        """,
+                        (ticker.upper(), vec, top_k),
+                    ).fetchall()
+                    # If ticker-specific search returned nothing, fall back to global
+                    if not rows:
+                        rows = conn.execute(
+                            "SELECT content, doc_type, source, ticker "
+                            "FROM rag_documents ORDER BY embedding <=> %s::vector LIMIT %s",
+                            (vec, top_k),
+                        ).fetchall()
+                else:
+                    rows = conn.execute(
+                        "SELECT content, doc_type, source, ticker "
+                        "FROM rag_documents ORDER BY embedding <=> %s::vector LIMIT %s",
+                        (vec, top_k),
+                    ).fetchall()
+
+            return [
+                {"text": r[0], "meta": {"doc_type": r[1], "source": r[2], "ticker": r[3]}}
+                for r in rows
+            ]
         except Exception as e:
             logger.warning(f"RAG retrieve failed: {e}")
             return []
 
     def format_context(self, chunks: list[dict]) -> str:
-        """Format retrieved chunks into a compact context string for the LLM."""
+        """Format retrieved chunks into a compact context block for the LLM."""
         if not chunks:
             return ""
         lines = ["\n\n--- Retrieved Financial Context ---"]
