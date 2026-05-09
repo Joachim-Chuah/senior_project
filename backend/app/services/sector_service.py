@@ -73,7 +73,7 @@ def _fetch_prices(tickers: list[str]) -> pd.DataFrame:
     try:
         data = yf.download(
             tickers,
-            period="6mo",
+            period="ytd",
             auto_adjust=True,
             progress=False,
             threads=True,
@@ -111,9 +111,9 @@ class SectorService:
                 col = etf if etf in prices.columns else None
                 if col and len(prices[col].dropna()) >= 5:
                     series = prices[col].dropna()
-                    ytd = _pct_change(series, min(len(series) - 1, 100))
-                    one_month = _pct_change(series, 22)
-                    five_day = _pct_change(series, 5)
+                    ytd = _pct_change(series, len(series) - 1)
+                    one_month = _pct_change(series, min(22, len(series) - 1))
+                    five_day = _pct_change(series, min(5, len(series) - 1))
                 else:
                     ytd, one_month, five_day = 0.0, 0.0, 0.0
 
@@ -161,8 +161,8 @@ class SectorService:
             series = prices[col].dropna()
             if len(series) < 5:
                 return 0.0, 0.0
-            ytd = _pct_change(series, min(len(series) - 1, 100))
-            one_month = _pct_change(series, 22)
+            ytd = _pct_change(series, len(series) - 1)
+            one_month = _pct_change(series, min(22, len(series) - 1))
             return ytd, one_month
 
         # ETF-level returns

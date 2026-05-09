@@ -226,7 +226,7 @@ export default function Sectors() {
   useEffect(() => {
     api.get('/sectors')
       .then(res => setSectors(res.data))
-      .catch(() => setError('Failed to load sector data. Check your FMP API key.'))
+      .catch(() => setError('Failed to load sector data. Make sure the backend is running.'))
       .finally(() => setLoading(false));
   }, []);
 
