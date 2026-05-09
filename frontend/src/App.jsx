@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Navbar from './components/Navbar';
+import React, { useState, useEffect } from 'react';
+import { PanelLeftOpen } from 'lucide-react';
+import Sidebar from './components/Sidebar';
 import PageBackground from './components/PageBackground';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
-import Confidence from './components/Confidence';
+import Screener from './components/Screener';
 import Landing from './components/Landing';
 import MockOptionsChain from './components/MockOptionsChain';
 import BlackScholesGuide from './components/BlackScholesGuide';
@@ -12,99 +13,12 @@ import Sectors from './components/Sectors';
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
-const TAB_ORDER = DEMO_MODE
-  ? ['home', 'sentiment', 'dashboard', 'confidence']
-  : ['home', 'dashboard', 'sectors', 'confidence'];
-
-const TAB_LABELS = {
-  home: 'Home',
-  dashboard: DEMO_MODE ? 'Options Chain' : 'Dashboard',
-  sentiment: 'Sentiment',
-  sectors: 'Sectors',
-  confidence: DEMO_MODE ? 'B-S Guide' : 'Confidence',
-};
-
-function ScrollDots({ tabs, activeTab, onNavigate }) {
-  return (
-    <div className="fixed right-5 top-1/2 -translate-y-1/2 z-50 flex flex-col items-end gap-3.5 hidden lg:flex">
-      {tabs.map(tab => {
-        const isActive = tab === activeTab;
-        return (
-          <button
-            key={tab}
-            onClick={() => onNavigate(tab)}
-            className="group flex items-center gap-2.5 cursor-pointer"
-          >
-            <span
-              className="text-xs font-medium transition-all duration-200 opacity-0 group-hover:opacity-100 whitespace-nowrap"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              {TAB_LABELS[tab]}
-            </span>
-            <div
-              className="rounded-full transition-all duration-300 flex-shrink-0"
-              style={{
-                width: isActive ? 10 : 5,
-                height: isActive ? 10 : 5,
-                background: isActive ? 'var(--accent)' : 'var(--border-hover)',
-                boxShadow: isActive ? '0 0 10px rgba(99,70,229,0.7)' : 'none',
-              }}
-            />
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function App() {
   const [launched, setLaunched] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [crossTabTicker, setCrossTabTicker] = useState(null);
   const [activeTicker, setActiveTicker] = useState(null);
-  const [scrollY, setScrollY] = useState(0);
-
-  const sectionRefs = useRef({});
-  const scrollContainerRef = useRef(null);
-  const scrollTopRef = useRef(0);
-
-  function goToTab(tabId, ticker = null) {
-    setActiveTab(tabId);
-    if (ticker) setCrossTabTicker(ticker);
-    window.history.pushState({ launched: true, tab: tabId }, '');
-    const el = sectionRefs.current[tabId];
-    if (el && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: el.offsetTop, behavior: 'smooth' });
-    }
-  }
-
-  function navigateTo(tabId, ticker = null) {
-    goToTab(tabId, ticker);
-  }
-
-  function clearCrossTabTicker() {
-    setCrossTabTicker(null);
-  }
-
-  useEffect(() => {
-    const handlePop = (e) => {
-      const state = e.state;
-      if (!state?.launched) {
-        setLaunched(false);
-        setActiveTab('home');
-      } else {
-        const tab = state.tab || 'home';
-        setLaunched(true);
-        setActiveTab(tab);
-        const el = sectionRefs.current[tab];
-        if (el && scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTo({ top: el.offsetTop, behavior: 'smooth' });
-        }
-      }
-    };
-    window.addEventListener('popstate', handlePop);
-    return () => window.removeEventListener('popstate', handlePop);
-  }, []);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [watchlist, setWatchlist] = useState(() => {
     try { return JSON.parse(localStorage.getItem('watchlist') || '[]'); }
@@ -141,119 +55,49 @@ function App() {
 
   const toggleDarkMode = () => setDarkMode(prev => !prev);
 
-  // Spotlight + mouse refs for direct DOM manipulation (no re-render on mousemove)
-  const spotlightRef = useRef(null);
-  const mouseRef     = useRef({ x: 0, y: 0, rawX: 0, rawY: 0 });
-  const darkModeRef  = useRef(darkMode);
-  const rafRef       = useRef(null);
+  function goToTab(tabId, ticker = null) {
+    setActiveTab(tabId);
+    if (ticker) setCrossTabTicker(ticker);
+    window.history.pushState({ launched: true, tab: tabId }, '');
+  }
 
-  // Scroll listener on the snap container
-  useEffect(() => {
-    if (!launched) return;
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const onScroll = () => {
-      const top = container.scrollTop;
-      scrollTopRef.current = top;
-      setScrollY(top);
-    };
-    container.addEventListener('scroll', onScroll, { passive: true });
-    return () => container.removeEventListener('scroll', onScroll);
-  }, [launched]);
-
-  useEffect(() => { darkModeRef.current = darkMode; }, [darkMode]);
+  function clearCrossTabTicker() {
+    setCrossTabTicker(null);
+  }
 
   useEffect(() => {
-    const onMouseMove = (e) => {
-      mouseRef.current = {
-        x: e.clientX / window.innerWidth  - 0.5,
-        y: e.clientY / window.innerHeight - 0.5,
-        rawX: e.clientX,
-        rawY: e.clientY,
-      };
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(() => {
-          rafRef.current = null;
-          const { x, y, rawX, rawY } = mouseRef.current;
-          const sy = scrollTopRef.current;
-
-          if (spotlightRef.current) {
-            const color = darkModeRef.current
-              ? 'rgba(255,255,255,0.055)'
-              : 'rgba(44,62,80,0.08)';
-            spotlightRef.current.style.background =
-              `radial-gradient(280px circle at ${rawX}px ${rawY}px, ${color}, transparent 70%)`;
-          }
-        });
+    const handlePop = (e) => {
+      const state = e.state;
+      if (!state?.launched) {
+        setLaunched(false);
+        setActiveTab('home');
+      } else {
+        setLaunched(true);
+        setActiveTab(state.tab || 'home');
       }
     };
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
   }, []);
 
-  // IntersectionObserver — sync active tab + fade+scale animation
-  useEffect(() => {
-    if (!launched) return;
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const observers = [];
-
-    TAB_ORDER.forEach((tab, i) => {
-      const el = sectionRefs.current[tab];
-      if (!el) return;
-
-      // Sync active tab when majority visible
-      const syncObs = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            setActiveTab(tab);
-            window.history.replaceState({ launched: true, tab }, '');
-          }
-        },
-        { root: container, threshold: 0.6 }
-      );
-      syncObs.observe(el);
-      observers.push(syncObs);
-
-      // Fade+scale: show when just entering view
-      const animObs = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) el.classList.add('snap-visible');
-        },
-        { root: container, threshold: 0.05 }
-      );
-      animObs.observe(el);
-      observers.push(animObs);
-
-      // First section is immediately visible
-      if (i === 0) requestAnimationFrame(() => el.classList.add('snap-visible'));
-    });
-
-    return () => observers.forEach(o => o.disconnect());
-  }, [launched]);
-
-  const renderSection = (tab) => {
+  function renderSection(tab) {
     switch (tab) {
       case 'home':
-        return <Home watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} navigateTo={navigateTo} />;
+        return <Home watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} navigateTo={goToTab} />;
       case 'dashboard':
         return DEMO_MODE
           ? <MockOptionsChain />
-          : <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} onTickerSelect={setActiveTicker} />;
+          : <Dashboard navigateTo={goToTab} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} onTickerSelect={setActiveTicker} />;
       case 'sentiment':
-        return <Dashboard navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} onTickerSelect={setActiveTicker} />;
+        return <Dashboard navigateTo={goToTab} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} watchlist={watchlist} addToWatchlist={addToWatchlist} removeFromWatchlist={removeFromWatchlist} onTickerSelect={setActiveTicker} />;
       case 'sectors':
         return <Sectors />;
-      case 'confidence':
-        return DEMO_MODE ? <BlackScholesGuide /> : <Confidence navigateTo={navigateTo} crossTabTicker={crossTabTicker} clearCrossTabTicker={clearCrossTabTicker} />;
+      case 'screener':
+        return <Screener navigateTo={goToTab} />;
       default:
         return null;
     }
-  };
+  }
 
   if (!launched) {
     return (
@@ -270,57 +114,44 @@ function App() {
 
   return (
     <div
-      className="theme-transition"
-      style={{ height: '100vh', overflow: 'hidden', backgroundColor: 'var(--bg)', color: 'var(--text)' }}
+      className="flex h-screen overflow-hidden theme-transition"
+      style={{ background: 'var(--bg)', color: 'var(--text)' }}
     >
-      {/* ── Cursor spotlight ── */}
-      <div ref={spotlightRef} className="fixed inset-0 pointer-events-none" style={{ zIndex: 1 }} />
-
-      {/* ── Noise grain overlay (light mode only) ── */}
-      {!darkMode && <div className="noise-overlay fixed inset-0 pointer-events-none" style={{ zIndex: 1 }} />}
-
-      {/* ── Dotted wave background (both modes) ── */}
-      <PageBackground darkMode={darkMode} />
-
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={goToTab}
-        darkMode={darkMode}
-        toggleDarkMode={toggleDarkMode}
-        onLogoClick={() => goToTab('home')}
-        navScrolled={scrollY > 10}
-      />
-
-      <ScrollDots tabs={TAB_ORDER} activeTab={activeTab} onNavigate={goToTab} />
-
-      <FloatingChat activeTicker={activeTicker} activeTab={activeTab} />
-
-      {/* ── Snap scroll container ── */}
+      {/* Sidebar — animates in/out */}
       <div
-        ref={scrollContainerRef}
-        className="relative z-10"
-        style={{
-          height: '100vh',
-          overflowY: 'scroll',
-          scrollSnapType: 'y mandatory',
-        }}
+        className="flex-shrink-0 overflow-hidden transition-all duration-200"
+        style={{ width: sidebarOpen ? 224 : 0 }}
       >
-        {TAB_ORDER.map(tab => (
-          <div
-            key={tab}
-            ref={el => { sectionRefs.current[tab] = el; }}
-            className="snap-section"
-            style={{
-              height: '100vh',
-              scrollSnapAlign: 'start',
-              scrollSnapStop: 'always',
-              overflowY: 'auto',
-              paddingTop: '4rem',
-            }}
+        <Sidebar
+          activeTab={activeTab}
+          onNavigate={goToTab}
+          darkMode={darkMode}
+          toggleDarkMode={toggleDarkMode}
+          onCollapse={() => setSidebarOpen(false)}
+        />
+      </div>
+
+      <div className="flex-1 relative overflow-y-auto min-w-0">
+        <PageBackground darkMode={darkMode} />
+        <FloatingChat activeTicker={activeTicker} activeTab={activeTab} />
+
+        {/* Expand button — only visible when sidebar is hidden */}
+        {!sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="fixed top-4 left-4 z-50 p-1.5 rounded-sm transition-colors duration-100"
+            style={{ color: 'var(--text-muted)', background: 'var(--surface)', border: '1px solid var(--border)' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--surface)'}
+            title="Open sidebar"
           >
-            {renderSection(tab)}
-          </div>
-        ))}
+            <PanelLeftOpen size={14} />
+          </button>
+        )}
+
+        <div className="relative z-10 p-6">
+          {renderSection(activeTab)}
+        </div>
       </div>
     </div>
   );
