@@ -21,6 +21,24 @@ export default {
                     light:   '#1A5491',
                     dark:    '#082848',
                 },
+                /* shadcn/ui semantic tokens */
+                background:  'var(--bg)',
+                foreground:  'var(--text)',
+                muted: {
+                    DEFAULT:    'var(--surface)',
+                    foreground: 'var(--text-muted)',
+                },
+                accent: {
+                    DEFAULT:    'var(--surface-2)',
+                    foreground: 'var(--text)',
+                },
+                primary: {
+                    DEFAULT:    'var(--accent)',
+                    foreground: 'var(--accent-text)',
+                },
+                border: 'var(--border)',
+                input:  'var(--border)',
+                ring:   'hsl(var(--ring))',
             },
             boxShadow: {
                 card:       '0 1px 3px 0 rgb(0 0 0 / 0.06)',
