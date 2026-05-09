@@ -62,26 +62,24 @@ async function classifyTexts(api, texts) {
   return res.data.labels;
 }
 
-export async function fetchSignal(api, ticker, limit = 30) {
+export async function fetchSignal(api, ticker) {
+  // Use the backend endpoint so Reddit data is included in the response
+  try {
+    const res = await api.get(`/sentiment/signal/${encodeURIComponent(ticker.toUpperCase())}`);
+    return res.data;
+  } catch {
+    return emptySignal(ticker);
+  }
+}
+
+async function fetchSignalFast(ticker) {
+  // StockTwits-only path — used for batch overview/screener (no Reddit, no latency)
   try {
     const res = await fetch(`${PROXY_BASE}?ticker=${encodeURIComponent(ticker.toUpperCase())}`);
     if (!res.ok) return emptySignal(ticker);
     const data = await res.json();
     if (!data.messages) return emptySignal(ticker);
-
-    const posts = data.messages.slice(0, limit).map(parseMessage);
-
-    const untaggedIdxs = posts.reduce((acc, p, i) => (p.sentiment === null ? [...acc, i] : acc), []);
-    if (untaggedIdxs.length > 0) {
-      try {
-        const texts = untaggedIdxs.map(i => posts[i].body);
-        const labels = await classifyTexts(api, texts);
-        untaggedIdxs.forEach((idx, j) => { posts[idx].sentiment = labels[j]; });
-      } catch {
-        untaggedIdxs.forEach(idx => { posts[idx].sentiment = 'Neutral'; });
-      }
-    }
-
+    const posts = data.messages.slice(0, 30).map(parseMessage);
     return computeSignal(ticker, posts, data.symbol);
   } catch {
     return emptySignal(ticker);
@@ -89,7 +87,7 @@ export async function fetchSignal(api, ticker, limit = 30) {
 }
 
 export async function fetchOverview(api, tickers) {
-  const results = await Promise.all(tickers.map(t => fetchSignal(api, t)));
+  const results = await Promise.all(tickers.map(t => fetchSignalFast(t)));
   return results.map(s => ({
     ticker: s.ticker,
     company_name: s.company_name,
