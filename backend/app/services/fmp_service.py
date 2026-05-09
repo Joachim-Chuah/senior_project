@@ -104,6 +104,13 @@ class FMPService:
         ]
         return filtered[:limit]
 
+    def get_price_change(self, ticker: str) -> Optional[Dict[str, Any]]:
+        """Return period returns for a ticker: ytd, 1M, 5D, 1D etc."""
+        data = self._get_stable("stock-price-change", {"symbol": ticker.upper()})
+        if isinstance(data, list) and data:
+            return data[0]
+        return None
+
     def get_etf_holdings(self, etf: str) -> List[Dict[str, Any]]:
         """Return ETF constituent holdings (asset, weightPercentage)."""
         data = self._get(f"etf-holder/{etf.upper()}")
