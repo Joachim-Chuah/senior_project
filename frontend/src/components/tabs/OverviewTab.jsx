@@ -5,7 +5,7 @@ import {
   Layers,
   SlidersHorizontal,
   Brain,
-  LineChart,
+  Bookmark,
   BarChart2,
 } from 'lucide-react'
 
@@ -96,10 +96,10 @@ const cards = [
       'Run a 6-signal confidence scan across the top 40 trending tickers — momentum, volume, sentiment, and more.',
   },
   {
-    icon: LineChart,
-    title: 'Options Analytics',
+    icon: Bookmark,
+    title: 'Watchlist',
     description:
-      'Live options chain data with a built-in Black-Scholes pricing guide.',
+      'Pin your favourite tickers and jump straight to their sentiment signal. Persisted locally so your list is always there when you return.',
   },
 ]
 
