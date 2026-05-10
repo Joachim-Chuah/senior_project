@@ -56,6 +56,7 @@ export default function App() {
   const [activeFeature, setActiveFeature] = useState(null);
   const [crossTabTicker, setCrossTabTicker] = useState(null);
   const [activeTicker, setActiveTicker] = useState(null);
+  const [highlightedFolder, setHighlightedFolder] = useState(null);
 
   const [watchlist, setWatchlist] = useState(() => {
     try { return JSON.parse(localStorage.getItem('watchlist') || '[]'); }
@@ -101,6 +102,14 @@ export default function App() {
     if (ticker) setCrossTabTicker(ticker);
     setActiveFeature(featureId);
     setActiveTab('features');
+  }
+
+  function handleOpenFeature(folderId) {
+    setActiveTab('features');
+    setActiveFeature(null);
+    setHighlightedFolder(folderId);
+    window.history.pushState({ launched: true, tab: 'features' }, '');
+    setTimeout(() => setHighlightedFolder(null), 2500);
   }
 
   function clearCrossTabTicker() {
@@ -168,7 +177,7 @@ export default function App() {
 
           {/* ── Overview ─────────────────────────────────── */}
           <TabsPanel value="overview">
-            <OverviewTab />
+            <OverviewTab onOpenFeature={handleOpenFeature} />
           </TabsPanel>
 
           {/* ── Features ─────────────────────────────────── */}
@@ -200,7 +209,7 @@ export default function App() {
                 />
               </div>
             ) : (
-              <FeaturesTab onSelect={handleFeatureSelect} />
+              <FeaturesTab onSelect={handleFeatureSelect} highlightedId={highlightedFolder} />
             )}
           </TabsPanel>
 

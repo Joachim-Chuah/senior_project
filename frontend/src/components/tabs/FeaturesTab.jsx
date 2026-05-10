@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { motion } from 'framer-motion'
 import {
   hotkeysCoreFeature,
   selectionFeature,
@@ -82,7 +83,7 @@ const items = {
 
 const indent = 20
 
-export default function FeaturesTab({ onSelect }) {
+export default function FeaturesTab({ onSelect, highlightedId }) {
   const [treeItems] = useState(items)
 
   const tree = useTree({
@@ -125,9 +126,19 @@ export default function FeaturesTab({ onSelect }) {
             const isFolder = item.isFolder()
             const FolderIconComp = FOLDER_ICONS[item.getId()] || null
             const feature = FEATURE_MAP[item.getId()]
+            const isHighlighted = item.getId() === highlightedId
 
             return (
-              <TreeItem key={item.getId()} item={item}>
+              <TreeItem key={item.getId()} item={item} className={isHighlighted ? 'relative' : undefined}>
+                {isHighlighted && (
+                  <motion.span
+                    className="absolute inset-0 rounded pointer-events-none"
+                    style={{ border: '1.5px solid var(--accent)', boxShadow: '0 0 10px 1px color-mix(in srgb, var(--accent) 25%, transparent)' }}
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: 0 }}
+                    transition={{ duration: 1, delay: 1.5 }}
+                  />
+                )}
                 <TreeItemLabel>
                   <span
                     className="flex items-center justify-between w-full"
