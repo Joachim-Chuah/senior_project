@@ -1,4 +1,5 @@
 import React from 'react'
+import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import {
   Activity,
@@ -38,8 +39,14 @@ const CornerPlusIcons = () => (
 
 // ── Bento card ────────────────────────────────────────────────────────────────
 
-const BentoCard = ({ className, icon: Icon, title, description, accent }) => (
-  <div
+const cardVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
+}
+
+const BentoCard = ({ className, icon: Icon, title, description }) => (
+  <motion.div
+    variants={cardVariants}
     className={cn(
       'relative rounded-lg border border-dashed p-6 flex flex-col justify-between min-h-[180px]',
       className,
@@ -53,7 +60,7 @@ const BentoCard = ({ className, icon: Icon, title, description, accent }) => (
           className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
           style={{ background: 'var(--surface-2)' }}
         >
-          <Icon size={15} style={{ color: accent || 'var(--text-muted)' }} />
+          <Icon size={15} style={{ color: 'var(--text-muted)' }} />
         </div>
       )}
       <div className="space-y-1.5">
@@ -65,7 +72,7 @@ const BentoCard = ({ className, icon: Icon, title, description, accent }) => (
         </p>
       </div>
     </div>
-  </div>
+  </motion.div>
 )
 
 // ── Card data ─────────────────────────────────────────────────────────────────
@@ -103,42 +110,51 @@ const cards = [
   },
 ]
 
+// Grid positions mirror the DOM order — used to compute stagger delay
+const gridClasses = [
+  'lg:col-span-3 lg:row-span-2',
+  'lg:col-span-3 lg:row-span-2',
+  'lg:col-span-4',
+  'lg:col-span-2',
+  'lg:col-span-2',
+]
+
 // ── Overview layout ───────────────────────────────────────────────────────────
+
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } },
+}
+
+const footerVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: cards.length * 0.08 + 0.05 } },
+}
 
 export default function OverviewTab() {
   return (
-    <div
-      className="w-full border-t"
-      style={{ borderColor: 'var(--border)' }}
-    >
+    <div className="w-full border-t" style={{ borderColor: 'var(--border)' }}>
       <div className="mx-auto max-w-5xl px-6 py-12">
 
         {/* Bento grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 auto-rows-auto gap-4">
-          <BentoCard
-            {...cards[0]}
-            className="lg:col-span-3 lg:row-span-2"
-          />
-          <BentoCard
-            {...cards[1]}
-            className="lg:col-span-3 lg:row-span-2"
-          />
-          <BentoCard
-            {...cards[2]}
-            className="lg:col-span-4"
-          />
-          <BentoCard
-            {...cards[3]}
-            className="lg:col-span-2"
-          />
-          <BentoCard
-            {...cards[4]}
-            className="lg:col-span-2"
-          />
-        </div>
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 auto-rows-auto gap-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {cards.map((card, i) => (
+            <BentoCard key={card.title} {...card} className={gridClasses[i]} />
+          ))}
+        </motion.div>
 
-        {/* Footer heading — negative margin pulls it up alongside the last grid row */}
-        <div className="max-w-2xl ml-auto text-right mt-6 lg:-mt-32">
+        {/* Footer heading */}
+        <motion.div
+          className="max-w-2xl ml-auto text-right mt-6 lg:-mt-32"
+          variants={footerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <div className="flex items-center justify-end gap-2 mb-4">
             <div
               className="w-5 h-5 rounded flex items-center justify-center"
@@ -163,7 +179,7 @@ export default function OverviewTab() {
             Reddit, FinBERT, and Groq AI into one dashboard built for retail traders
             who want an edge without the Bloomberg terminal price tag.
           </p>
-        </div>
+        </motion.div>
 
       </div>
     </div>
