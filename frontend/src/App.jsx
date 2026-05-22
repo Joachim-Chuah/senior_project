@@ -3,7 +3,7 @@ import { HouseIcon, PanelsTopLeftIcon, SettingsIcon, ArrowLeft } from 'lucide-re
 import { Tabs, TabsList, TabsTab, TabsPanel } from './components/ui/tabs';
 import PageBackground from './components/PageBackground';
 import FloatingChat from './components/FloatingChat';
-import Landing from './components/Landing';
+import LoginModal from './components/LoginModal';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
 import Screener from './components/Screener';
@@ -51,7 +51,11 @@ function FeatureView({ feature, crossTabTicker, clearCrossTabTicker, watchlist, 
 }
 
 export default function App() {
-  const [launched, setLaunched] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() =>
+    localStorage.getItem('rylo_authed') === 'true'
+  );
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingFeature, setPendingFeature] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [activeFeature, setActiveFeature] = useState(null);
   const [crossTabTicker, setCrossTabTicker] = useState(null);
@@ -90,12 +94,12 @@ export default function App() {
   function handleTabChange(tab) {
     setActiveTab(tab);
     setActiveFeature(null);
-    window.history.pushState({ launched: true, tab }, '');
+    window.history.pushState({ tab }, '');
   }
 
   function handleFeatureSelect(featureId) {
     setActiveFeature(featureId);
-    window.history.pushState({ launched: true, tab: 'features', feature: featureId }, '');
+    window.history.pushState({ tab: 'features', feature: featureId }, '');
   }
 
   function navigateTo(featureId, ticker = null) {
@@ -104,12 +108,31 @@ export default function App() {
     setActiveTab('features');
   }
 
-  function handleOpenFeature(folderId) {
+  function openFeature(folderId) {
     setActiveTab('features');
     setActiveFeature(null);
     setHighlightedFolder(folderId);
-    window.history.pushState({ launched: true, tab: 'features' }, '');
+    window.history.pushState({ tab: 'features' }, '');
     setTimeout(() => setHighlightedFolder(null), 2500);
+  }
+
+  function handleOpenFeature(folderId) {
+    if (!isAuthenticated) {
+      setPendingFeature(folderId);
+      setShowLoginModal(true);
+    } else {
+      openFeature(folderId);
+    }
+  }
+
+  function handleLoginSuccess() {
+    setIsAuthenticated(true);
+    localStorage.setItem('rylo_authed', 'true');
+    setShowLoginModal(false);
+    if (pendingFeature) {
+      openFeature(pendingFeature);
+      setPendingFeature(null);
+    }
   }
 
   function clearCrossTabTicker() {
@@ -119,10 +142,7 @@ export default function App() {
   useEffect(() => {
     const handlePop = (e) => {
       const state = e.state;
-      if (!state?.launched) {
-        setLaunched(false);
-      } else {
-        setLaunched(true);
+      if (state) {
         setActiveTab(state.tab || 'overview');
         setActiveFeature(state.feature || null);
       }
@@ -131,19 +151,6 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePop);
   }, []);
 
-  if (!launched) {
-    return (
-      <Landing
-        onLaunch={() => {
-          setLaunched(true);
-          window.history.pushState({ launched: true, tab: 'overview' }, '');
-        }}
-        darkMode={darkMode}
-        toggleDarkMode={() => setDarkMode(p => !p)}
-      />
-    );
-  }
-
   return (
     <div
       className="min-h-screen theme-transition"
@@ -151,6 +158,13 @@ export default function App() {
     >
       <PageBackground darkMode={darkMode} />
       <FloatingChat activeTicker={activeTicker} activeTab={activeTab} />
+
+      {showLoginModal && (
+        <LoginModal
+          onSuccess={handleLoginSuccess}
+          onClose={() => { setShowLoginModal(false); setPendingFeature(null); }}
+        />
+      )}
 
       <div className="relative z-10">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -164,7 +178,7 @@ export default function App() {
                 <HouseIcon aria-hidden="true" />
                 Overview
               </TabsTab>
-              <TabsTab value="features">
+              <TabsTab value="features" onClick={() => setActiveFeature(null)}>
                 <PanelsTopLeftIcon aria-hidden="true" />
                 Features
               </TabsTab>
@@ -183,9 +197,9 @@ export default function App() {
           {/* ── Features ─────────────────────────────────── */}
           <TabsPanel value="features">
             {activeFeature ? (
-              <div>
+              <div className="mx-auto max-w-7xl px-6 py-6">
                 {/* Back button */}
-                <div className="flex items-center gap-2 px-6 pt-4 pb-0">
+                <div className="flex items-center gap-2 mb-4">
                   <button
                     onClick={() => setActiveFeature(null)}
                     className="flex items-center gap-1.5 text-xs transition-colors duration-100"

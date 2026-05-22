@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import GlitterBackground from '../GlitterBackground'
 import {
   Activity,
   Layers,
@@ -344,8 +345,9 @@ const footerVariants = {
 
 export default function OverviewTab({ onOpenFeature }) {
   return (
-    <div className="w-full border-t" style={{ borderColor: 'var(--border)' }}>
-      <div className="mx-auto max-w-5xl px-6 py-12">
+    <div className="relative w-full overflow-hidden">
+      <GlitterBackground speed={0.75} />
+      <div className="relative z-10 mx-auto max-w-5xl px-6 py-12">
 
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 auto-rows-auto gap-4"
