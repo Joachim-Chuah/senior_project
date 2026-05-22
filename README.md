@@ -1,6 +1,6 @@
 # Rylo
 
-A real-time stock sentiment dashboard for retail traders. Combines social sentiment, AI-powered analysis, sector rotation, and a confidence-scored stock screener into one clean interface.
+Rylo is a stock sentiment platform built for retail traders who want an edge without the Bloomberg terminal price tag. It aggregates social signals from StockTwits and Reddit, runs them through FinBERT sentiment classification, and surfaces the results alongside a confidence-scored screener, sector rotation tracking, and an AI analyst — all in one dashboard.
 
 **Live demo:** https://ryloweb.vercel.app · login: `demo` / `rylo123`
 
